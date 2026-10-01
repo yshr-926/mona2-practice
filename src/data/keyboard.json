@@ -1,6 +1,6 @@
 {
   "source": "~/zmk-config-moNa2-v2",
-  "syncedAt": "2026-09-24T05:56:18.876Z",
+  "syncedAt": "2026-10-01T14:29:00.329Z",
   "keys": [
     {
       "w": 1,
@@ -494,14 +494,32 @@
           "params": [
             "3",
             "LANG2"
-          ]
+          ],
+          "def": {
+            "type": "hold-tap",
+            "hold": {
+              "type": "layer"
+            },
+            "tap": {
+              "type": "key"
+            }
+          }
         },
         {
           "behavior": "lt_to_layer_0",
           "params": [
             "3",
             "LANG1"
-          ]
+          ],
+          "def": {
+            "type": "hold-tap",
+            "hold": {
+              "type": "layer"
+            },
+            "tap": {
+              "type": "key"
+            }
+          }
         },
         {
           "behavior": "lt",
