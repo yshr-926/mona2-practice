@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'bun:test';
 import { bundledKeyboard } from '../lib/keymap-source.ts';
-import { createKeymap, expectedCodes, tapKeycode } from '../lib/layout.ts';
-import { SYSTEM_SHORTCUTS, keycodeToCode } from '../lib/keycodes.ts';
+import { createKeymap, expectedCodes } from '../lib/layout.ts';
+import { keycodeToCode } from '../lib/keycodes.ts';
+import { keyTestConfirmation } from './tasks.ts';
 import { buildLessons, keyPositions } from './index.ts';
 
 const kb = bundledKeyboard();
@@ -26,8 +27,8 @@ describe('lessons against the synced keymap', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('can verify every base-layer key in the key test (by keydown, or by the screen change for Mac system shortcuts)', () => {
-    const untestable = kb.layers[0].bindings.flatMap((b, pos) => (expectedCodes(b).length || SYSTEM_SHORTCUTS[tapKeycode(b) ?? ''] ? [] : [pos]));
+  it('can verify every base-layer key in the key test (by keydown or self-report for outputs the browser cannot verify)', () => {
+    const untestable = kb.layers[0].bindings.flatMap((b, pos) => (expectedCodes(b).length || keyTestConfirmation(b) ? [] : [pos]));
     expect(untestable).toEqual([]);
   });
 });

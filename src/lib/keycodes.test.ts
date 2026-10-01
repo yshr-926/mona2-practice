@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { eventMatches, KEYCODE_CHAR, keycodeToChar, keycodeToCode, physicalKeyToChar, resolveKeycode, US_LAYOUT } from './keycodes.ts';
+import { eventMatches, KEYCODE_CHAR, keycodeToChar, keycodeToCode, physicalKeyToChar, resolveKeycode, systemShortcut, US_LAYOUT } from './keycodes.ts';
 
 describe('物理キーの解決', () => {
   it('記号の暗黙 Shift と修飾関数を同じ物理キーへ解決する', () => {
@@ -59,5 +59,27 @@ describe('配列表による文字の解決', () => {
     expect(eventMatches({ code: 'Digit2', key: '@' } as KeyboardEvent, keycodeToCode('AT_SIGN')!)).toBe(true);
     expect(eventMatches({ code: '', key: 'Eisu' } as KeyboardEvent, 'Lang2')).toBe(true);
     expect(eventMatches({ code: 'KeyA', key: 'a' } as KeyboardEvent, 'Digit2')).toBe(false);
+  });
+});
+
+describe('Mac とブラウザのショートカット', () => {
+  it('追加した操作を正規化して照合する', () => {
+    for (const key of ['LG(SPACE)', 'RG(TAB)', 'RC(SPACE)', 'F11', 'F14', 'F15',
+      'RC(UP)', 'LC(DOWN)', 'RC(LEFT)', 'LC(RIGHT)', 'LG(Q)', 'LG(W)', 'RG(T)',
+      'C_VOL_UP', 'C_VOLUME_DOWN', 'K_VOL_UP', 'C_MUTE', 'C_BRI_UP', 'C_BRIGHTNESS_DEC',
+      'C_PLAY_PAUSE', 'C_PP', 'C_NEXT', 'C_PREVIOUS', 'C_STOP', 'C_EJECT']) {
+      expect(systemShortcut(key)).toBeDefined();
+    }
+    for (const digit of [3, 4, 5]) {
+      expect(systemShortcut(`RS(RG(NUMBER_${digit}))`)).toBe(systemShortcut(`LG(LS(N${digit}))`));
+    }
+    expect(systemShortcut(' LG( RS( DOLLAR ) ) ')).toBe(systemShortcut('LG(LS(N4))'));
+    expect(systemShortcut('LC(LEFT)')).toBe(systemShortcut('RC(LEFT_ARROW)'));
+  });
+
+  it('修飾のない文字や別の修飾、不明なキーは一致させない', () => {
+    for (const key of ['SPACE', 'TAB', 'N4', 'LS(N4)', 'LA(SPACE)', 'LG(LC(SPACE))', 'UNKNOWN', 'toString']) {
+      expect(systemShortcut(key)).toBeUndefined();
+    }
   });
 });
