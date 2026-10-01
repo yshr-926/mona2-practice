@@ -88,6 +88,7 @@ export type Keymap = {
   resolve: (layers: number[], pos: number) => Binding;
   // 何らかの操作で入れるレイヤー (ベースを含む、番号順)
   reachable: number[];
+  routes: { layers: number[]; steps: StrokeStep[] }[];
   charMap: Map<string, Stroke>;
 };
 
@@ -108,8 +109,9 @@ export function createKeymap(kb: KeyboardData, base = 0, layout: KeyboardLayout 
     return kb.layers[base].bindings[pos];
   };
   const effective = (layer: number, pos: number) => resolve([base, layer], pos);
-  const km: Keymap = { kb, base, layout, layerKeys, effective, resolve, reachable: [base], charMap: new Map() };
-  const { charMap, reachable } = searchStrokes(km);
+  const km: Keymap = { kb, base, layout, layerKeys, effective, resolve, reachable: [base], routes: [], charMap: new Map() };
+  const { charMap, reachable, routes } = searchStrokes(km);
+  km.routes = routes;
   km.charMap = charMap;
   km.reachable = reachable;
   return km;
@@ -184,7 +186,7 @@ type SearchState = {
   shiftAt?: { layers: number[]; held: number[]; index: number };
 };
 
-function searchStrokes(km: Keymap): { charMap: Map<string, Stroke>; reachable: number[] } {
+function searchStrokes(km: Keymap): { charMap: Map<string, Stroke>; reachable: number[]; routes: Keymap['routes'] } {
   const { kb, base } = km;
   const mid = (Math.min(...kb.keys.map((k) => k.x)) + Math.max(...kb.keys.map((k) => k.x))) / 2;
   const side = (pos: number) => kb.keys[pos].x < mid;
@@ -253,9 +255,11 @@ function searchStrokes(km: Keymap): { charMap: Map<string, Stroke>; reachable: n
   const candidates: Stroke[] = [];
   const costs = new Map<Stroke, number>();
   const reachable = new Set<number>();
+  const routes: Keymap['routes'] = [];
   const emit = (st: SearchState) => {
     const layers = layersOf(st);
     layers.forEach((l) => reachable.add(l));
+    if (!st.stickyShift) routes.push({ layers, steps: st.steps });
     const top = layers[layers.length - 1];
     // 文字キーの好み: ベースに近いほど簡単。長押しで別の役割になるキー (lt / mt) より普通のキー
     const extra = (pos: number) =>
@@ -309,7 +313,7 @@ function searchStrokes(km: Keymap): { charMap: Map<string, Stroke>; reachable: n
   for (const s of candidates.sort((a, b) => costs.get(a)! - costs.get(b)!)) {
     if (!map.has(s.char)) map.set(s.char, s);
   }
-  return { charMap: map, reachable: [...reachable].sort((a, b) => a - b) };
+  return { routes, charMap: map, reachable: [...reachable].sort((a, b) => a - b) };
 }
 
 // キーテスト用: そのキーを単独で押したときにブラウザへ届く KeyboardEvent.code の候補
