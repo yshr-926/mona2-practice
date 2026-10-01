@@ -8,6 +8,7 @@ export type KeyboardView = {
   layer: number;
   marks?: Map<number, Mark>;
   caption?: string;
+  missing?: boolean; // 押すキー (target / hold / shift) が今のキーマップに見つからなかった
 };
 
 export function renderKeyboard(el: HTMLElement, km: Keymap, view: KeyboardView): void {
