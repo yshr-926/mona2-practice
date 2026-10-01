@@ -1,3 +1,5 @@
+import { sourceGuidance } from './source.ts';
+import { currentOrigin, type KeymapOrigin } from '../lib/keymap-source.ts';
 import { characterWay, keyName as keyNameForLesson, entryText, findWay, keyWay, layerContents, layerEntry, wayText, wayView, type Way } from './abilities.ts';
 import { escapeHtml } from '../ui/dom.ts';
 import { behaviorDef } from '../lib/zmk.ts';
@@ -17,7 +19,6 @@ export type Lesson = {
   missing?: string; // このキーマップでは課題ができない理由 (押すキーが無いなど)。あれば課題を飛ばす
 };
 
-const REPO_URL = 'https://github.com/yshr-926/zmk-config-moNa2-v2';
 const ZMK_STUDIO_URL = 'https://zmk.studio/';
 
 const found = (pos: number | undefined): pos is number => pos !== undefined && pos >= 0;
@@ -93,7 +94,8 @@ export function keyPositions(km: Keymap) {
   };
 }
 
-export function buildLessons(km: Keymap): Lesson[] {
+export function buildLessons(km: Keymap, origin: KeymapOrigin | null = currentOrigin()): Lesson[] {
+  const source = sourceGuidance(origin ?? undefined);
   const k = keyPositions(km);
   const label = (layer: number, pos: number | undefined) => (found(pos) ? bindingLabel(km.effective(layer, pos)).tap : MISSING_KEY);
   const baseLabel = (pos: number | undefined) => label(km.base, pos);
@@ -193,7 +195,7 @@ export function buildLessons(km: Keymap): Lesson[] {
     },
 
     // 機能ごとに、今のキーマップで出せる操作だけを練習する。
-    ...abilityLessons(km),
+    ...abilityLessons(km, source),
 
     // ================= 6. Bluetooth とカスタマイズ =================
     {
@@ -209,12 +211,10 @@ export function buildLessons(km: Keymap): Lesson[] {
           <li>接続して mona2 を選び、キーをクリックして割り当てを変える → 保存</li>
         </ol>
         <p>変更は右手側に保存されます。全部元に戻すには <code>settings_reset</code> を書き込みます (ペアリングも消えます)。</p>
-        <h3>リポジトリのキーマップを編集する</h3>
-        <p><a href="${REPO_URL}/blob/main/config/mona2.keymap" target="_blank" rel="noreferrer">config/mona2.keymap</a> を編集してコミットすると、
-        GitHub Actions がファームウェアを作ってくれます。キー配置の変更だけなら<b>右手側だけ</b>書き込めば OK で、settings_reset も不要です。
-        トラックボールの向きなど、キー配置以外の設定を変えたいときもこちらです。</p>
-        <p class="note">このアプリの画面はリポジトリのキーマップを元にしています。ZMK Studio で変えた内容はアプリには反映されないので、
-        アプリのヒントと合わせたい場合はリポジトリ側を編集してください。</p>`,
+        <h3>キーマップの設定ファイルを編集する</h3>
+        <p>${source.keymap} を編集します。${source.build}
+        キー配置の変更だけなら settings_reset は不要です。トラックボールの向きなど、キー配置以外の設定もこちらで変えられます。</p>
+        <p class="note">${source.sync}</p>`,
       task: read(),
     },
 
@@ -238,7 +238,7 @@ export function buildLessons(km: Keymap): Lesson[] {
           <dt>急にキーボードが使えなくなった (Finder に USB ドライブが出てきた)</dt>
           <dd>Boot キーを押してしまっています。電源を入れ直せば元に戻ります。</dd>
           <dt>キー配置を変えたい</dt>
-          <dd>ZMK Studio か、リポジトリのキーマップを編集します (「キー配置を変えるには」を参照)。</dd>
+          <dd>ZMK Studio か、${source.keymap} を編集します (「キー配置を変えるには」を参照)。</dd>
         </dl>
         <p>あとは「自由練習」で毎日少しずつ打てば、すぐに慣れます。</p>`,
       task: read('完了!'),
@@ -247,7 +247,7 @@ export function buildLessons(km: Keymap): Lesson[] {
   return lessons.map((l) => ({ ...l, missing: missingIn(km, l.task) }));
 }
 
-function abilityLessons(km: Keymap): Lesson[] {
+function abilityLessons(km: Keymap, source: ReturnType<typeof sourceGuidance>): Lesson[] {
   const out: Lesson[] = [];
   const chapter = '3. 基本の打ち方';
   const add = (id: string, title: string, body: string, task: Task, view?: KeyboardView, ch = chapter) => out.push({ id, title, chapter: ch, body, task, view });
@@ -326,7 +326,7 @@ function abilityLessons(km: Keymap): Lesson[] {
   if (scrollLayer !== undefined) {
     const w = layerEntry(km, scrollLayer)!;
     const instruction = entryText(km, w);
-    add('scroll', 'ボールでスクロール', `<p>${instruction}、ボールを転がすと、カーソルは動かずに画面がスクロールします。縦にも横にもスクロールできます。左手のノブでも縦スクロールできるので、使いやすい方を使ってください。</p>`, scrollAxes(`${instruction}、指示の向きにボールを転がしてください。`, scrollRepair(km)), wayView(w), '5. マウス');
+    add('scroll', 'ボールでスクロール', `<p>${instruction}、ボールを転がすと、カーソルは動かずに画面がスクロールします。縦にも横にもスクロールできます。左手のノブでも縦スクロールできるので、使いやすい方を使ってください。</p>`, scrollAxes(`${instruction}、指示の向きにボールを転がしてください。`, scrollRepair(km, source)), wayView(w), '5. マウス');
   }
   const bt = findWay(km, isBehavior('bt'));
   if (bt) {
@@ -341,7 +341,7 @@ function abilityLessons(km: Keymap): Lesson[] {
   return out.sort((a, b) => a.chapter.localeCompare(b.chapter));
 }
 
-function scrollRepair(km: Keymap): string {
+function scrollRepair(km: Keymap, source: ReturnType<typeof sourceGuidance>): string {
   const fix = (axis: 'X' | 'Y', inverted: boolean | undefined) => `<code>INPUT_TRANSFORM_${axis}_INVERT</code> ${inverted === undefined ? 'の有無を確認して切り替える' : inverted ? 'を外す' : 'を追加する'}`;
-  return `Mac の「ナチュラルなスクロール」設定を確認してください。左右だけ (または上下だけ) 逆なら、<a href="${REPO_URL}/blob/main/boards/shields/mona2/mona2_r.overlay" target="_blank" rel="noreferrer">mona2_r.overlay</a> の <code>scroller</code> の <code>&amp;zip_scroll_transform</code> で、左右は ${fix('X', km.kb.pointing?.scrollInvertX)}、上下は ${fix('Y', km.kb.pointing?.scrollInvertY)}。変更してビルドし、右手側に書き込み直します。`;
+  return `Mac の「ナチュラルなスクロール」設定を確認してください。左右だけ (または上下だけ) 逆なら、${source.overlay} の <code>scroller</code> の <code>&amp;zip_scroll_transform</code> で、左右は ${fix('X', km.kb.pointing?.scrollInvertX)}、上下は ${fix('Y', km.kb.pointing?.scrollInvertY)}。${source.build}`;
 }
