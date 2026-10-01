@@ -102,6 +102,7 @@ export function mountTyping(root: HTMLElement, o: TypingOptions): void {
         return;
       }
       if (e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1) return;
+      if (index >= line.length) return; // 出す行が無い (終わった) とき
       e.preventDefault();
 
       const expected = line[index];

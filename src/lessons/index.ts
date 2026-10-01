@@ -6,7 +6,7 @@
 import type { Keymap } from '../lib/layout.ts';
 import { bindingLabel, comboPositions, findKey, isBehavior, isKey, posOfTap, type Found } from '../lib/layout.ts';
 import type { KeyboardView, Mark } from '../ui/keyboard.ts';
-import { anyKey, click, confirmSteps, drag, imeToggle, keyTest, press, read, scrollAxes, trackball, type, wheel, type PressStep, type Task } from './tasks.ts';
+import { anyKey, click, confirmSteps, drag, imeToggle, keyTest, missingIn, press, read, scrollAxes, trackball, type, wheel, type PressStep, type Task } from './tasks.ts';
 
 export type Lesson = {
   id: string;
@@ -16,16 +16,25 @@ export type Lesson = {
   tips?: string[]; // つまずきやすいポイント (HTML)
   view?: KeyboardView; // 課題が始まる前に見せるキーボード
   task: Task;
+  missing?: string; // このキーマップでは課題ができない理由 (押すキーが無いなど)。あれば課題を飛ばす
 };
 
 const REPO_URL = 'https://github.com/yshr-926/zmk-config-moNa2-v2';
 const ZMK_STUDIO_URL = 'https://zmk.studio/';
 
+const found = (pos: number | undefined): pos is number => pos !== undefined && pos >= 0;
+
+// 見つからなかったキーは図に出さない。押すキーが欠けていたら missing にして、課題側で「このキーマップにはありません」と出す
 const view = (layer: number, marks: [number | undefined, Mark][], caption?: string): KeyboardView => ({
   layer,
-  marks: new Map(marks.filter((m): m is [number, Mark] => m[0] !== undefined && m[0] >= 0)),
+  marks: new Map(marks.filter((m): m is [number, Mark] => found(m[0]))),
   caption,
+  missing: marks.some(([pos, mark]) => mark !== 'warn' && !found(pos)) || undefined,
 });
+
+// 本文に差し込むキー名・レイヤー名。見つからないときもそれと分かる表示にする
+const MISSING_KEY = '(キーなし)';
+const layerName = (layer: number | undefined) => (layer === undefined ? 'L?' : `L${layer}`);
 
 // レイヤー layer の中で条件に合うキー
 function inLayer(km: Keymap, layer: number | undefined, match: Parameters<typeof findKey>[1]): Found | undefined {
@@ -46,7 +55,8 @@ export function keyPositions(km: Keymap) {
   const navLayer = layerWith(km, isKey('UP_ARROW'));
   const esc = comboPositions(kb, 'ESC');
   const btParam = kb.combos.find((c) => c.positions.join() === esc.join())?.binding.params[0];
-  const btLayer = btParam === undefined ? undefined : Number(btParam);
+  // コンボの先がレイヤーでない (Esc コンボが無い、ただの &kp など) キーマップもある
+  const btLayer = btParam !== undefined && kb.layers[Number(btParam)] ? Number(btParam) : undefined;
   const inBt = (match: Parameters<typeof findKey>[1]) => (btLayer === undefined ? -1 : kb.layers[btLayer].bindings.findIndex(match));
 
   return {
@@ -96,12 +106,12 @@ export function keyPositions(km: Keymap) {
 
 export function buildLessons(km: Keymap): Lesson[] {
   const k = keyPositions(km);
-  const label = (layer: number, pos: number | undefined) => (pos === undefined || pos < 0 ? '?' : bindingLabel(km.effective(layer, pos)).tap);
+  const label = (layer: number, pos: number | undefined) => (found(pos) ? bindingLabel(km.effective(layer, pos)).tap : MISSING_KEY);
   const baseLabel = (pos: number | undefined) => label(km.base, pos);
   const numKey = baseLabel(k.numKey);
   const symKey = baseLabel(k.symKey);
   const layerView = (f: Found | undefined, extra: [number | undefined, Mark][] = []) =>
-    f ? view(f.layer, [[f.layerKey, 'hold'], [f.pos, 'target'], ...extra]) : undefined;
+    f ? view(f.layer, [...(f.layer === km.base ? [] : [[f.layerKey, 'hold'] as [number | undefined, Mark]]), [f.pos, 'target'], ...extra]) : undefined;
   const pressFound = (prompt: string, f: Found | undefined, codes: string[], extra: [number | undefined, Mark][] = []): PressStep => ({
     prompt,
     codes,
@@ -122,7 +132,7 @@ export function buildLessons(km: Keymap): Lesson[] {
     [k.ctrlShiftTab?.pos, 'warn'],
   ];
 
-  return [
+  const lessons: Lesson[] = [
     // ================= 1. はじめに =================
     {
       id: 'welcome',
@@ -394,10 +404,10 @@ export function buildLessons(km: Keymap): Lesson[] {
         これがレイヤーです。キーボードの「裏面」がいくつかあって、親指で裏返しているイメージです。</p>
         <table>
           <tr><th>押しっぱなしにするキー</th><th>レイヤー</th><th>出せるもの</th></tr>
-          <tr><td>${numKey} (右親指)</td><td>L${k.numLayer}</td><td>数字、[ ] ( ) \\ |</td></tr>
-          <tr><td>${symKey} (左親指)</td><td>L${k.symLayer}</td><td>記号、F1〜F12、<strong>マウスクリック</strong></td></tr>
-          <tr><td>英数 または かな</td><td>L${k.navLayer}</td><td>矢印、行頭・行末への移動、Delete、スクショ、Mission Control、${scrollLayers.includes(k.navLayer ?? -1) ? '<strong>ボールでスクロール</strong>' : ''}</td></tr>
-          <tr><td>英数 + かな を両方</td><td>L${k.btLayer}</td><td>Bluetooth の切り替え</td></tr>
+          <tr><td>${numKey} (右親指)</td><td>${layerName(k.numLayer)}</td><td>数字、[ ] ( ) \\ |</td></tr>
+          <tr><td>${symKey} (左親指)</td><td>${layerName(k.symLayer)}</td><td>記号、F1〜F12、<strong>マウスクリック</strong></td></tr>
+          <tr><td>英数 または かな</td><td>${layerName(k.navLayer)}</td><td>矢印、行頭・行末への移動、Delete、スクショ、Mission Control${scrollLayers.includes(k.navLayer ?? -1) ? '、<strong>ボールでスクロール</strong>' : ''}</td></tr>
+          <tr><td>英数 + かな を両方</td><td>${layerName(k.btLayer)}</td><td>Bluetooth の切り替え</td></tr>
         </table>
         <p><strong>押す順番が大事</strong>です:</p>
         <ol>
@@ -532,15 +542,15 @@ export function buildLessons(km: Keymap): Lesson[] {
       chapter: '5. マウス',
       title: 'ボールでスクロール',
       body: `
-        <p><b>${scrollInstruction}</b>ボールを転がすと、カーソルは動かずに<strong>画面がスクロール</strong>します。
-        縦にも横にもスクロールできます。左手のノブでも縦スクロールできるので、使いやすい方を使ってください。</p>`,
+        ${pointing && scrollLayer === undefined ? '<p>読み込んだ overlay には利用できるスクロールレイヤーがありません。ファームウェアの設定を確認してください。</p>' : `<p><b>${scrollInstruction}</b>ボールを転がすと、カーソルは動かずに<strong>画面がスクロール</strong>します。
+        縦にも横にもスクロールできます。左手のノブでも縦スクロールできるので、使いやすい方を使ってください。</p>`}`,
       view: scrollLayer === undefined ? undefined : view(scrollLayer, [[scrollKey, 'hold']]),
       tips: [
         `カーソルが動くだけでスクロールしない → ${scrollInstruction}、ボールを転がす。${pointing === undefined ? ' overlay が無いので、矢印のレイヤーをスクロール用と仮定しています。' : ''}`,
         '上下も左右も逆に感じる → Mac の「ナチュラルなスクロール」設定で変えられる。',
         '左右だけ (または上下だけ) 逆に感じる → 下の判定結果を見てください。',
       ],
-      task: scrollAxes(
+      task: pointing && scrollLayer === undefined ? read() : scrollAxes(
         `${scrollInstruction}、指示の向きにボールを転がしてください (それぞれ少しずつで OK)。`,
         `直すにはファームウェアの設定を変えます: <a href="${REPO_URL}/blob/main/boards/shields/mona2/mona2_r.overlay" target="_blank" rel="noreferrer">mona2_r.overlay</a> の
         <code>scroller</code> の <code>&amp;zip_scroll_transform</code> で、左右だけ逆なら ${scrollFix('X', pointing?.scrollInvertX)}、上下だけ逆なら ${scrollFix('Y', pointing?.scrollInvertY)}。変更してコミット →
@@ -636,4 +646,5 @@ export function buildLessons(km: Keymap): Lesson[] {
       task: read('完了!'),
     },
   ];
+  return lessons.map((l) => ({ ...l, missing: missingIn(km, l.task) }));
 }

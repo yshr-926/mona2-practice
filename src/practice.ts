@@ -1,7 +1,7 @@
 // 自由練習モード。レッスンを終えたあとに毎日やる用。
 
 import type { Keymap } from './lib/layout.ts';
-import { DRILLS, pickLine } from './drills.ts';
+import { DRILLS, pickLine, typableLines } from './drills.ts';
 import { loadStats, record, saveStats, weakest } from './stats.ts';
 import type { KeyboardView } from './ui/keyboard.ts';
 import { escapeHtml, h, visibleChar } from './ui/dom.ts';
@@ -14,7 +14,10 @@ export function mountPractice(
   outer: AbortSignal,
 ): void {
   const stats = loadStats();
-  let drill = DRILLS[0];
+  const canType = (c: string) => km.charMap.has(c);
+  // 今のキーマップで 1 行も打てないメニューは選べないようにする
+  const playable = (d: (typeof DRILLS)[number]) => typableLines(d, canType).length > 0;
+  let drill = DRILLS.find(playable);
   let line: string | undefined;
   let session: AbortController | undefined;
 
@@ -40,7 +43,8 @@ export function mountPractice(
       ...DRILLS.map((d) =>
         h('button', {
           textContent: d.title,
-          title: d.description,
+          title: playable(d) ? d.description : 'このキーマップでは打てる行がありません',
+          disabled: !playable(d),
           className: d === drill ? 'active' : '',
           onclick: () => {
             drill = d;
@@ -50,10 +54,15 @@ export function mountPractice(
       ),
     );
     box.replaceChildren();
+    if (!drill) {
+      box.append(h('p', { className: 'warn', textContent: 'このキーマップで打てる練習メニューがありません。' }));
+      return;
+    }
+    const current = drill;
     mountTyping(box, {
       km,
       signal: session.signal,
-      nextLine: () => (line = pickLine(drill, (c) => km.charMap.has(c), line)),
+      nextLine: () => (line = pickLine(current, canType, line)),
       setKeyboard,
       onKey: (c, ok) => record(stats, c, ok),
       onLine: () => {

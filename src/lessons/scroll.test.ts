@@ -13,7 +13,6 @@ it('スクロールレッスンは overlay のレイヤーと保持キーを使�
 it('overlay が不明のときだけ矢印レイヤーへフォールバックする', () => {
   const kb = { ...bundledKeyboard(), pointing: undefined };
   expect(buildLessons(createKeymap(kb)).find((l) => l.id === 'scroll')?.view?.layer).toBe(3);
-  kb.pointing = undefined;
   const noScroll = { ...kb, pointing: { scrollLayers: [] } };
   expect(buildLessons(createKeymap(noScroll)).find((l) => l.id === 'scroll')?.view).toBeUndefined();
 });
