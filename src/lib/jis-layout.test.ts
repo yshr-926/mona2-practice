@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { JIS_LAYOUT, keycodeToChar, keycodeToCode, physicalKeyToChar, eventMatches } from './keycodes.ts';
-import { createKeymap, tapKeycode } from './layout.ts';
+import { createKeymap, shiftKey, tapKeycode } from './layout.ts';
 import keyboard from '../data/keyboard.json';
 import type { KeyboardData } from './zmk.ts';
 
@@ -23,7 +23,7 @@ describe('Mac JIS 配列', () => {
       expect(stroke).toBeDefined();
       const keycode = tapKeycode(km.effective(stroke.layer, stroke.key))!;
       const code = keycodeToCode(keycode)!;
-      const key = keycodeToChar(keycode, JIS_LAYOUT, stroke.shiftKey !== undefined)!;
+      const key = keycodeToChar(keycode, JIS_LAYOUT, shiftKey(stroke) !== undefined)!;
       expect(key).toBe(char); // mountTyping の e.key === expected と同じ比較
       expect(eventMatches({ code, key } as KeyboardEvent, code)).toBe(true);
     }

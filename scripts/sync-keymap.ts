@@ -14,7 +14,7 @@ const keymapPath = join(configDir, 'config/mona2.keymap');
 const dtsiPath = join(configDir, 'boards/shields/mona2/mona2.dtsi');
 
 const keymapText = readFileSync(keymapPath, 'utf8');
-const { layers, combos } = parseKeymap(keymapText);
+const { layers, combos, conditionalLayers } = parseKeymap(keymapText);
 const overlayPath = join(configDir, 'boards/shields/mona2/mona2_r.overlay');
 const pointing = existsSync(overlayPath) ? parseOverlay(readFileSync(overlayPath, 'utf8'), keymapText) : undefined;
 const keys = parsePhysicalLayout(readFileSync(dtsiPath, 'utf8'));
@@ -32,6 +32,7 @@ const data: KeyboardData = {
   layers,
   combos,
   pointing,
+  ...(conditionalLayers.length ? { conditionalLayers } : {}),
 };
 
 const out = new URL('../src/data/keyboard.json', import.meta.url);

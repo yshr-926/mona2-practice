@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { bindingLabel, createKeymap, expectedCodes, holdLayer, tapKeycode } from './layout.ts';
+import { bindingLabel, createKeymap, expectedCodes, holdLayer, shiftKey, tapKeycode } from './layout.ts';
 import { expandDefines, parseDefines, parseKeymap, type KeyboardData } from './zmk.ts';
 
 // #define・自作 hold-tap (ホームロウ mod)・display-name つきマクロを含む小さなキーマップ
@@ -137,6 +137,7 @@ describe('custom behaviors', () => {
     };
     const km = createKeymap(kb);
     expect(km.charMap.get('a')).toMatchObject({ layer: 0, key: 0 });
-    expect(km.charMap.get('S')).toMatchObject({ key: 1, shiftKey: 0 });
+    expect(km.charMap.get('S')).toMatchObject({ key: 1 });
+    expect(shiftKey(km.charMap.get('S')!)).toBe(0);
   });
 });

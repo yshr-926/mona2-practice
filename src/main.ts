@@ -1,7 +1,7 @@
 import './style.css';
 import type { KeyboardData } from './lib/zmk.ts';
 import { currentKeymap, fromBundled, setCurrentKeymap, type KeymapState } from './lib/keymap-source.ts';
-import { comboLayers, createKeymap, type Keymap } from './lib/layout.ts';
+import { createKeymap, type Keymap } from './lib/layout.ts';
 import { loadProgress, saveProgress } from './lib/progress.ts';
 import { buildLessons, type Lesson } from './lessons/index.ts';
 import { mountPractice } from './practice.ts';
@@ -26,7 +26,7 @@ function build(state: KeymapState) {
   km = nextKm;
   lessons = nextLessons;
   // レイヤーのタブに出すのは、実際に行けるレイヤーだけ
-  reachable = [...new Set([km.base, ...km.layerKeys.keys(), ...comboLayers(kb)])].sort((a, b) => a - b);
+  reachable = km.reachable;
   const when = new Date(kb.syncedAt).toLocaleString();
   $('source').textContent = `keymap: ${kb.source} (${state.origin.kind === 'bundled' ? `標準, synced ${when}` : `読み込み ${when}`})`;
 }
