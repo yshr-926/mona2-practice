@@ -15,7 +15,27 @@ export type TaskCtx = {
   complete: () => void;
 };
 
-export type Task = (ctx: TaskCtx) => void;
+// missing: 押すキーが今のキーマップに無くて課題ができないときの理由 (課題を作るときに分かるもの)
+// lines: 文字入力の課題で打たせる行 (打てるかどうかはキーマップ次第なので missingIn で確かめる)
+export type Task = ((ctx: TaskCtx) => void) & { missing?: string; lines?: string[] };
+
+const NOT_IN_KEYMAP = 'このキーマップにはありません';
+
+// 押すキーが見つからなかった表示 (lessons/index.ts の view() が missing を付ける)
+const lacks = (view: KeyboardView | undefined) => !view || !!view.missing;
+
+// 行の文字が全部、今のキーマップで打てるか
+export const canType = (km: Keymap, line: string) => [...line].every((c) => km.charMap.has(c));
+
+/** このキーマップでは課題ができないとき、その理由 */
+export function missingIn(km: Keymap, task: Task): string | undefined {
+  if (task.missing) return task.missing;
+  if (task.lines && !task.lines.some((l) => canType(km, l))) {
+    const chars = [...new Set(task.lines.flatMap((l) => [...l]))].filter((c) => !km.charMap.has(c));
+    return `この課題で打つ文字 (${chars.join(' ')}) が、このキーマップでは打てません。`;
+  }
+  return undefined;
+}
 
 const on = <K extends keyof WindowEventMap>(ctx: TaskCtx, type: K, fn: (e: WindowEventMap[K]) => void, passive = true) =>
   window.addEventListener(type, fn, { signal: ctx.signal, passive });
@@ -64,79 +84,94 @@ function tapHint(km: Keymap, e: KeyboardEvent): string {
 
 export type PressStep = { prompt: string; codes: string[]; view?: KeyboardView };
 
-export const press =
-  (steps: PressStep[]): Task =>
-  (ctx) => {
-    const list = h('ol', { className: 'steps' });
-    const feedback = h('p', { className: 'feedback' });
-    ctx.area.append(list, feedback);
-    let i = 0;
+// 手順の一覧。キーが見つからなかった手順は「このキーマップにはありません」として飛ばす
+function stepItems(steps: { prompt: string; view?: KeyboardView }[], i: number) {
+  return steps.map((s, j) => {
+    const li = h('li', { className: lacks(s.view) ? 'skip' : j < i ? 'ok' : j === i ? 'current' : '' });
+    li.innerHTML = lacks(s.view) ? `${s.prompt} — ${NOT_IN_KEYMAP}` : s.prompt;
+    return li;
+  });
+}
 
-    const render = () => {
-      list.replaceChildren(
-        ...steps.map((s, j) => {
-          const li = h('li', { className: j < i ? 'ok' : j === i ? 'current' : '' });
-          li.innerHTML = s.prompt;
-          return li;
-        }),
+const allLack = (steps: { view?: KeyboardView }[]) => (steps.every((s) => lacks(s.view)) ? `この課題で押すキーが、${NOT_IN_KEYMAP}。` : undefined);
+
+export const press = (steps: PressStep[]): Task =>
+  Object.assign(
+    (ctx: TaskCtx) => {
+      const list = h('ol', { className: 'steps' });
+      const feedback = h('p', { className: 'feedback' });
+      ctx.area.append(list, feedback);
+      let i = 0;
+      const skip = () => {
+        while (i < steps.length && lacks(steps[i].view)) i++;
+      };
+
+      const render = () => {
+        list.replaceChildren(...stepItems(steps, i));
+        if (i < steps.length) ctx.setKeyboard(steps[i].view ?? null);
+      };
+
+      on(
+        ctx,
+        'keydown',
+        (e) => {
+          if (i >= steps.length) return;
+          if (steps[i].codes.some((c) => matchSpec(e, c))) {
+            e.preventDefault();
+            i++;
+            skip();
+            feedback.textContent = '';
+            render();
+            if (i === steps.length) ctx.complete();
+            return;
+          }
+          if (['Shift', 'Control', 'Meta', 'Alt'].includes(e.key)) return; // 修飾キー単体は途中経過
+          const mods = [e.metaKey && 'Cmd', e.ctrlKey && 'Ctrl', e.altKey && 'Alt', e.shiftKey && 'Shift'].filter(Boolean);
+          feedback.innerHTML = `今届いたのは「${[...mods, e.code || e.key].join(' + ')}」です。${tapHint(ctx.km, e)}`;
+        },
+        false,
       );
-      if (i < steps.length) ctx.setKeyboard(steps[i].view ?? null);
-    };
-
-    on(
-      ctx,
-      'keydown',
-      (e) => {
-        if (i >= steps.length) return;
-        if (steps[i].codes.some((c) => matchSpec(e, c))) {
-          e.preventDefault();
-          i++;
-          feedback.textContent = '';
-          render();
-          if (i === steps.length) ctx.complete();
-          return;
-        }
-        if (['Shift', 'Control', 'Meta', 'Alt'].includes(e.key)) return; // 修飾キー単体は途中経過
-        const mods = [e.metaKey && 'Cmd', e.ctrlKey && 'Ctrl', e.altKey && 'Alt', e.shiftKey && 'Shift'].filter(Boolean);
-        feedback.innerHTML = `今届いたのは「${[...mods, e.code || e.key].join(' + ')}」です。${tapHint(ctx.km, e)}`;
-      },
-      false,
-    );
-    render();
-  };
+      skip();
+      render();
+      if (i === steps.length) ctx.complete();
+    },
+    { missing: allLack(steps) },
+  );
 
 // ---- Mac が受け取る操作 (デスクトップの切り替えなど) を、画面を見て確認する ----
 // ブラウザには何も届かないので、押して画面が変わったら「できた」を押してもらう
 
 export type ConfirmStep = { prompt: string; done: string; view?: KeyboardView };
 
-export const confirmSteps =
-  (steps: ConfirmStep[]): Task =>
-  (ctx) => {
-    const list = h('ol', { className: 'steps' });
-    const button = h('button', { className: 'primary' });
-    ctx.area.append(list, button);
-    let i = 0;
-    const render = () => {
-      list.replaceChildren(
-        ...steps.map((s, j) => {
-          const li = h('li', { className: j < i ? 'ok' : j === i ? 'current' : '' });
-          li.innerHTML = s.prompt;
-          return li;
-        }),
-      );
-      if (i < steps.length) {
-        button.textContent = steps[i].done;
-        ctx.setKeyboard(steps[i].view ?? null);
-      } else button.remove();
-    };
-    button.onclick = () => {
-      i++;
+export const confirmSteps = (steps: ConfirmStep[]): Task =>
+  Object.assign(
+    (ctx: TaskCtx) => {
+      const list = h('ol', { className: 'steps' });
+      const button = h('button', { className: 'primary' });
+      ctx.area.append(list, button);
+      let i = 0;
+      const skip = () => {
+        while (i < steps.length && lacks(steps[i].view)) i++;
+      };
+      const render = () => {
+        list.replaceChildren(...stepItems(steps, i));
+        if (i < steps.length) {
+          button.textContent = steps[i].done;
+          ctx.setKeyboard(steps[i].view ?? null);
+        } else button.remove();
+      };
+      button.onclick = () => {
+        i++;
+        skip();
+        render();
+        if (i === steps.length) ctx.complete();
+      };
+      skip();
       render();
       if (i === steps.length) ctx.complete();
-    };
-    render();
-  };
+    },
+    { missing: allLack(steps) },
+  );
 
 // ---- 全キーの動作確認 ----
 
@@ -424,9 +459,8 @@ export const scrollAxes =
 
 const BUTTON_NAME = ['左クリック', '中クリック (ホイールクリック)', '右クリック'];
 
-export const click =
-  (button: 0 | 1 | 2, view?: KeyboardView): Task =>
-  (ctx) => {
+export const click = (button: 0 | 1 | 2, view?: KeyboardView): Task =>
+  Object.assign((ctx: TaskCtx) => {
     const target = h('div', { className: 'click-target', textContent: `ここを${BUTTON_NAME[button]}` });
     const feedback = h('p', { className: 'feedback' });
     ctx.area.append(target, feedback);
@@ -448,13 +482,12 @@ export const click =
       },
       { signal: ctx.signal },
     );
-  };
+  }, { missing: lacks(view) ? `${BUTTON_NAME[button]}のキーが、${NOT_IN_KEYMAP}。` : undefined });
 
 // ---- ドラッグ ----
 
-export const drag =
-  (view?: KeyboardView): Task =>
-  (ctx) => {
+export const drag = (view?: KeyboardView): Task =>
+  Object.assign((ctx: TaskCtx) => {
     const field = h('div', { className: 'drag-field' });
     const chip = h('div', { className: 'chip', textContent: '持ち上げて' });
     const zone = h('div', { className: 'zone', textContent: 'ここに置く' });
@@ -511,13 +544,15 @@ export const drag =
       },
       { signal: ctx.signal },
     );
-  };
+  }, { missing: lacks(view) ? `左クリックのキーが、${NOT_IN_KEYMAP}。` : undefined });
 
 // ---- 文字を打つ ----
 
-// 打たせる行をテストから確かめられるように、課題関数に lines を持たせておく
-export const type = (lines: string[]): Task & { lines: string[] } =>
+// 打たせる行をテストから確かめられるように、課題関数に lines を持たせておく。
+// 今のキーマップで打てない文字を含む行は出さない (1 行も打てなければ missingIn で課題ごと飛ばす)
+export const type = (all: string[]): Task & { lines: string[] } =>
   Object.assign((ctx: TaskCtx) => {
+    const lines = all.filter((l) => canType(ctx.km, l));
     let i = 0;
     const progress = h('p', { className: 'feedback' });
     const box = h('div');
@@ -535,14 +570,13 @@ export const type = (lines: string[]): Task & { lines: string[] } =>
       onFinish: () => ctx.complete(),
     });
     update();
-  }, { lines });
+  }, { lines: all });
 
 // ---- 日本語入力 ⇄ 英字入力の切り替え ----
 // IME はテキスト欄にフォーカスがあるときしか働かないので、実際に欄へ打ってもらって変換が始まるかを見る。
 
-export const imeToggle =
-  (view: KeyboardView, toJapanese: string, toEnglish: string): Task =>
-  (ctx) => {
+export const imeToggle = (view: KeyboardView, toJapanese: string, toEnglish: string): Task =>
+  Object.assign((ctx: TaskCtx) => {
     const steps = h('ol', { className: 'steps' });
     const input = h('input', { className: 'ime-input', placeholder: 'ここをクリックしてから操作', autocomplete: 'off' });
     const feedback = h('p', { className: 'feedback' });
@@ -591,4 +625,4 @@ export const imeToggle =
     );
     render();
     setTimeout(() => input.focus());
-  };
+  }, { missing: lacks(view) ? `英数 / かな のキーが、${NOT_IN_KEYMAP}。` : undefined });

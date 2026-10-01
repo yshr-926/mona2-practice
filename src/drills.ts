@@ -48,9 +48,14 @@ export const DRILLS: Drill[] = [
   { id: 'code', title: 'コード', description: '全部入り', lines: CODE },
 ];
 
-// canType で打てない文字を含む行を除く (キーマップによっては ' や " が無いため)
-export function pickLine(drill: Drill, canType: (c: string) => boolean, prev?: string): string {
-  const typable = drill.lines.filter((l) => [...l].every(canType));
+// canType で打てない文字を含む行を除く (キーマップによっては ' や " や数字が無いため)
+export function typableLines(drill: Drill, canType: (c: string) => boolean): string[] {
+  return drill.lines.filter((l) => [...l].every(canType));
+}
+
+// 打てる行が 1 つも無ければ undefined
+export function pickLine(drill: Drill, canType: (c: string) => boolean, prev?: string): string | undefined {
+  const typable = typableLines(drill, canType);
   const pool = typable.length > 1 ? typable.filter((l) => l !== prev) : typable;
-  return pool[Math.floor(Math.random() * pool.length)] ?? '';
+  return pool[Math.floor(Math.random() * pool.length)];
 }

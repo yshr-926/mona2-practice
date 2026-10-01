@@ -44,8 +44,14 @@ let current: AbortController | undefined;
 function renderToc(activeId?: string) {
   const toc = $('toc');
   const chapters = [...new Set(lessons.map((l) => l.chapter))];
+  // このキーマップでできない課題は数に入れない (クリア扱いにもしない)
+  const doable = lessons.filter((l) => !l.missing);
+  const skipped = lessons.length - doable.length;
   toc.replaceChildren(
-    h('p', { className: 'progress', textContent: `${lessons.filter((l) => done.has(l.id)).length} / ${lessons.length} クリア` }),
+    h('p', {
+      className: 'progress',
+      textContent: `${doable.filter((l) => done.has(l.id)).length} / ${doable.length} クリア${skipped ? ` (このキーマップでできない課題 ${skipped} 個)` : ''}`,
+    }),
     ...chapters.map((ch) =>
       h(
         'section',
@@ -59,8 +65,8 @@ function renderToc(activeId?: string) {
             .map((l) =>
               h(
                 'li',
-                { className: [l.id === activeId ? 'active' : '', done.has(l.id) ? 'done' : ''].join(' ') },
-                h('a', { href: `#/lesson/${l.id}`, textContent: l.title }),
+                { className: [l.id === activeId ? 'active' : '', l.missing ? 'unavailable' : done.has(l.id) ? 'done' : ''].join(' ') },
+                h('a', { href: `#/lesson/${l.id}`, textContent: l.title, title: l.missing ?? '' }),
               ),
             ),
         ),
@@ -160,6 +166,19 @@ function showLesson(lesson: Lesson) {
     ),
   );
 
+  // 押すキーが今のキーマップに無い課題は始めずに飛ばす。進み具合には記録しない (キーマップを戻せばまたできる)
+  if (lesson.missing) {
+    area.append(
+      h('p', { className: 'warn', textContent: lesson.missing }),
+      h('p', { textContent: 'この課題は飛ばして次へ進んでください。' }),
+      next
+        ? h('a', { className: 'primary', href: `#/lesson/${next.id}`, textContent: `飛ばして次へ: ${next.title} →` })
+        : h('a', { className: 'primary', href: '#/practice', textContent: '飛ばして自由練習へ →' }),
+    );
+    renderToc(lesson.id);
+    return;
+  }
+
   let completed = false;
   lesson.task({
     km,
@@ -228,7 +247,7 @@ function route() {
   const m = location.hash.match(/^#\/(lesson|practice|keymap)\/?([\w-]*)/);
   if (m?.[1] === 'practice') return showPractice();
   if (m?.[1] === 'keymap') return showKeymapSettings();
-  const lesson = lessons.find((l) => l.id === m?.[2]) ?? lessons.find((l) => !done.has(l.id)) ?? lessons[0];
+  const lesson = lessons.find((l) => l.id === m?.[2]) ?? lessons.find((l) => !done.has(l.id) && !l.missing) ?? lessons[0];
   showLesson(lesson);
 }
 
