@@ -1,5 +1,5 @@
 import type { Binding, KeyboardData } from './zmk.ts';
-import { KEYCODE_CHAR, SHIFTED, keycodeLabel, keycodeToCode } from './keycodes.ts';
+import { US_LAYOUT, keycodeToChar, keycodeLabel, keycodeToCode, type KeyboardLayout } from './keycodes.ts';
 
 // タップ時に送られるキーコード (&kp X / &mt MOD X / &lt N X など)
 export function tapKeycode(b: Binding): string | undefined {
@@ -65,13 +65,14 @@ export function bindingLabel(b: Binding): { tap: string; hold?: string } {
 export type Keymap = {
   kb: KeyboardData;
   base: number;
+  layout: KeyboardLayout;
   // ベースで押しっぱなしにするとそのレイヤーになるキー
   layerKeys: Map<number, number>;
   effective: (layer: number, pos: number) => Binding;
   charMap: Map<string, Stroke>;
 };
 
-export function createKeymap(kb: KeyboardData, base = 0): Keymap {
+export function createKeymap(kb: KeyboardData, base = 0, layout: KeyboardLayout = US_LAYOUT): Keymap {
   // 同じレイヤーに入るキーが複数あるときは、親指の段 (下の方) で一番左のキーを代表にする
   const layerKeys = new Map<number, number>();
   kb.layers[base].bindings.forEach((b, pos) => {
@@ -85,7 +86,7 @@ export function createKeymap(kb: KeyboardData, base = 0): Keymap {
     const b = kb.layers[layer].bindings[pos];
     return b.behavior === 'trans' ? kb.layers[base].bindings[pos] : b;
   };
-  const km: Keymap = { kb, base, layerKeys, effective, charMap: new Map() };
+  const km: Keymap = { kb, base, layout, layerKeys, effective, charMap: new Map() };
   km.charMap = buildCharMap(km);
   return km;
 }
@@ -124,13 +125,13 @@ function buildCharMap(km: Keymap): Map<string, Stroke> {
 
     for (const pos of positions) {
       const code = tapKeycode(km.effective(layer, pos));
-      const char = code && KEYCODE_CHAR[code];
+      const char = code && keycodeToChar(code, km.layout);
       if (!char) continue;
       candidates.push({ char, layer, key: pos, layerKey });
-      const shifted = SHIFTED[char];
+      const shifted = keycodeToChar(code!, km.layout, true);
       // Shift は打つキーと反対の手を優先する (タイピングの基本)
       const shiftKey = shiftKeys.filter((s) => s !== pos).sort((a, b) => Number(side(a) === side(pos)) - Number(side(b) === side(pos)))[0];
-      if (shifted && shiftKey !== undefined) candidates.push({ char: shifted, layer, key: pos, layerKey, shiftKey });
+      if (shifted && shifted !== char && shiftKey !== undefined) candidates.push({ char: shifted, layer, key: pos, layerKey, shiftKey });
     }
   }
 

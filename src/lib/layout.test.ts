@@ -77,3 +77,33 @@ describe('charMap', () => {
     expect(missing).toEqual([]);
   });
 });
+
+describe('修飾つき文字の Stroke', () => {
+  const fixture = (bindings: string): KeyboardData => ({
+    ...kb,
+    keys: kb.keys.slice(0, 4),
+    layers: [{ name: 'BASE', bindings: parseBindings(bindings) }],
+    combos: [],
+  });
+
+  it('&kp LS(N1) と &kp AT_SIGN は追加の Shift を必要としない', () => {
+    const map = createKeymap(fixture('&kp LS(N1) &kp AT_SIGN &kp LEFT_SHIFT &kp LG(A)')).charMap;
+    expect(map.get('!')).toEqual({ char: '!', layer: 0, key: 0, layerKey: undefined });
+    expect(map.get('@')).toEqual({ char: '@', layer: 0, key: 1, layerKey: undefined });
+    expect(map.has('1')).toBe(false);
+    expect(map.has('2')).toBe(false);
+    expect(map.has('a')).toBe(false);
+  });
+
+  it('配列表を差し替えると Stroke の文字も変わる', () => {
+    const map = createKeymap(fixture('&kp AT_SIGN &kp N2 &kp RIGHT_SHIFT &kp INT3'), 0, {
+      Digit2: ['2', '"'], IntlYen: ['¥', '|'],
+    }).charMap;
+    expect(map.get('"')?.key).toBe(0);
+    expect(map.get('"')?.shiftKey).toBeUndefined();
+    expect(map.get('2')?.key).toBe(1);
+    expect(map.get('¥')?.key).toBe(3);
+    expect(map.get('|')?.shiftKey).toBe(2);
+    expect(map.has('@')).toBe(false);
+  });
+});

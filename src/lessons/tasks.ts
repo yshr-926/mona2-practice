@@ -2,7 +2,7 @@
 
 import type { Keymap } from '../lib/layout.ts';
 import { bindingLabel, expectedCodes, tapKeycode } from '../lib/layout.ts';
-import { KEYCODE_CHAR, SYSTEM_SHORTCUTS, eventMatches, keycodeToCode } from '../lib/keycodes.ts';
+import { keycodeToChar, SYSTEM_SHORTCUTS, eventMatches, keycodeToCode } from '../lib/keycodes.ts';
 import type { KeyboardView, Mark } from '../ui/keyboard.ts';
 import { h } from '../ui/dom.ts';
 import { mountTyping } from '../ui/typing.ts';
@@ -158,7 +158,7 @@ export const keyTest: Task = (ctx) => {
 
   // 同じ入力を送るキーが複数ある (Cmd が 2 つ、など) とどちらを押したか区別できないので、回数で数える。
   // ; と : のように code が同じでも出る文字が違えば e.key で区別できる
-  const charOf = (pos: number) => KEYCODE_CHAR[tapKeycode(bindings[pos]) ?? ''];
+  const charOf = (pos: number) => keycodeToChar(tapKeycode(bindings[pos]) ?? '', ctx.km.layout);
   const shared = new Map<string, number[]>();
   codesOf.forEach((codes, pos) => {
     const sig = `${codes[0]}|${charOf(pos) ?? ''}`;
