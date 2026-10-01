@@ -9,6 +9,8 @@ export type KeyboardView = {
   marks?: Map<number, Mark>;
   caption?: string;
   missing?: boolean; // 押すキー (target / hold / shift) が今のキーマップに見つからなかった
+  layers?: number[]; // 有効なレイヤーが複数のとき全部 (&trans を下のレイヤーへ落として表示する)
+  pressedIn?: Map<number, number[]>; // 先に押したキーと、押したときに有効だったレイヤー (そのときの表示にする)
 };
 
 export function renderKeyboard(el: HTMLElement, km: Keymap, view: KeyboardView): void {
@@ -23,10 +25,10 @@ export function renderKeyboard(el: HTMLElement, km: Keymap, view: KeyboardView):
 
   for (const [pos, g] of kb.keys.entries()) {
     const b = kb.layers[view.layer].bindings[pos];
-    // &trans (そのレイヤーでは変わらないキー) はベースの表示を薄く出す。
-    // そのレイヤーに入るために押さえているキーも、押さえている側 (ベース) の表示にする
-    const held = km.layerKeys.get(view.layer) === pos;
-    const { tap, hold } = bindingLabel(held ? km.kb.layers[km.base].bindings[pos] : km.effective(view.layer, pos));
+    // &trans (そのレイヤーでは変わらないキー) は下のレイヤー (ふつうはベース) の表示を薄く出す。
+    // そのレイヤーに入るために先に押したキーは、押したときの表示にする
+    const pressedIn = view.pressedIn?.get(pos) ?? (km.layerKeys.get(view.layer) === pos ? [km.base] : undefined);
+    const { tap, hold } = bindingLabel(km.resolve(pressedIn ?? view.layers ?? [km.base, view.layer], pos));
     const key = document.createElement('div');
     key.className = 'key';
     if (b.behavior === 'trans' && view.layer !== km.base) key.classList.add('trans');

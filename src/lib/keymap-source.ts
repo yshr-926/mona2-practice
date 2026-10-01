@@ -48,7 +48,7 @@ export function keyboardFromKeymap(text: string, origin: KeymapOrigin, loadedAt 
   } catch (e) {
     throw new Error(`キーマップを読み取れませんでした (${e instanceof Error ? e.message : String(e)})`);
   }
-  const { layers, combos } = parsed;
+  const { layers, combos, conditionalLayers } = parsed;
   const keys = BUNDLED.keys;
   if (layers.length === 0) throw new Error('レイヤーが見つかりませんでした。ZMK の .keymap ファイルか確認してください');
   for (const layer of layers) {
@@ -61,7 +61,7 @@ export function keyboardFromKeymap(text: string, origin: KeymapOrigin, loadedAt 
       throw new Error(`コンボ「${combo.name}」のキー位置が読み取れませんでした`);
     }
   }
-  return { source: originLabel(origin), syncedAt: loadedAt, keys, layers, combos, ...(overlayText === undefined ? {} : { pointing: parseOverlay(overlayText, text) }) };
+  return { source: originLabel(origin), syncedAt: loadedAt, keys, layers, combos, ...(overlayText === undefined ? {} : { pointing: parseOverlay(overlayText, text) }), ...(conditionalLayers.length ? { conditionalLayers } : {}) };
 }
 
 export function originLabel(origin: KeymapOrigin): string {

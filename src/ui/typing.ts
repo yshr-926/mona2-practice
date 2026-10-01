@@ -22,25 +22,41 @@ export function isComposing(e: KeyboardEvent): boolean {
 }
 
 export function strokeView(km: Keymap, s: Stroke): KeyboardView {
-  const marks = new Map<number, Mark>([[s.key, 'target']]);
-  if (s.layerKey !== undefined) marks.set(s.layerKey, 'hold');
-  if (s.shiftKey !== undefined) marks.set(s.shiftKey, 'shift');
+  const marks = new Map<number, Mark>();
+  const pressedIn = new Map<number, number[]>();
+  for (const step of s.steps) {
+    for (const k of step.keys) {
+      marks.set(k, step.role === 'shift' ? 'shift' : 'hold');
+      pressedIn.set(k, step.layers);
+    }
+  }
+  marks.set(s.key, 'target');
+  const hasTap = s.steps.some((t) => t.press !== 'hold');
   return {
     layer: s.layer,
+    layers: s.layers,
     marks,
-    caption: s.layer !== km.base ? `L${s.layer} ${km.kb.layers[s.layer].name} を表示中 (緑のキーを押している間の配置)` : undefined,
+    pressedIn,
+    caption:
+      s.layer !== km.base
+        ? `L${s.layer} ${km.kb.layers[s.layer].name} を表示中 (${hasTap ? '緑のキーを押したあと' : '緑のキーを押している間'}の配置)`
+        : undefined,
   };
 }
 
 export function describeStroke(km: Keymap, s: Stroke): string {
-  const name = (pos: number, layer: number) => {
-    const { tap, hold } = bindingLabel(km.effective(layer, pos));
+  const name = (pos: number, layers: number[]) => {
+    const { tap, hold } = bindingLabel(km.resolve(layers, pos));
     return escapeHtml(hold ? `${tap}/${hold}` : tap);
   };
-  const parts: string[] = [];
-  if (s.layerKey !== undefined) parts.push(`<b class="k-hold">${name(s.layerKey, km.base)}</b> を押したまま`);
-  if (s.shiftKey !== undefined) parts.push(`<b class="k-shift">${name(s.shiftKey, s.layer)}</b> を押したまま`);
-  parts.push(`<b class="k-target">${name(s.key, s.layer)}</b>`);
+  const parts = s.steps.map((step) => {
+    const cls = step.role === 'shift' ? 'k-shift' : 'k-hold';
+    const keys = step.keys.map((k) => `<b class="${cls}">${name(k, step.layers)}</b>`).join(' と ');
+    const together = step.keys.length > 1 ? 'を同時に' : 'を';
+    const action = { hold: '押したまま', sticky: '押して離してから', toggle: '押して切り替えてから' }[step.press];
+    return `${keys} ${together}${action}`;
+  });
+  parts.push(`<b class="k-target">${name(s.key, s.layers)}</b>`);
   return parts.join(' + ');
 }
 

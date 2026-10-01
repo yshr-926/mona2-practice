@@ -12,6 +12,10 @@ export type Binding = {
 export type BehaviorDef =
   | { type: 'key' } // &kp と同じ: params[0] のキーコードを送る
   | { type: 'layer' } // &mo と同じ: params[0] のレイヤーをホールド中だけ有効にする
+  | { type: 'toggle-layer' } // &tog と同じ: 押すたびに params[0] のレイヤーを有効/無効にする
+  | { type: 'to-layer' } // &to と同じ: params[0] のレイヤーだけを有効にする (ベースは残る)
+  | { type: 'sticky-layer' } // &sl と同じ: 押して離すと、次のキー 1 回だけ params[0] のレイヤーになる
+  | { type: 'sticky-key' } // &sk と同じ: 押して離すと、次のキー 1 回だけ params[0] の修飾キーがかかる
   | { type: 'hold-tap'; hold: BehaviorDef; tap: BehaviorDef } // params[0] がホールド側、params[1] がタップ側
   | { type: 'other'; label: string }; // それ以外 (マクロなど)。label は表示名
 
@@ -20,6 +24,17 @@ const BUILTIN_BEHAVIORS: Record<string, BehaviorDef> = {
   mo: { type: 'layer' },
   mt: { type: 'hold-tap', hold: { type: 'key' }, tap: { type: 'key' } },
   lt: { type: 'hold-tap', hold: { type: 'layer' }, tap: { type: 'key' } },
+  tog: { type: 'toggle-layer' },
+  to: { type: 'to-layer' },
+  sl: { type: 'sticky-layer' },
+  sk: { type: 'sticky-key' },
+};
+
+// 自作ビヘイビアの compatible のうち、組み込みと同じ正体になるもの
+const COMPATIBLE_BEHAVIORS: Record<string, BehaviorDef> = {
+  'zmk,behavior-momentary-layer': { type: 'layer' },
+  'zmk,behavior-toggle-layer': { type: 'toggle-layer' },
+  'zmk,behavior-to-layer': { type: 'to-layer' },
 };
 
 export function behaviorDef(b: Binding): BehaviorDef | undefined {
@@ -33,7 +48,11 @@ export type Layer = {
 
 export type KeyGeometry = { x: number; y: number; w: number; h: number };
 
-export type Combo = { name: string; positions: number[]; binding: Binding };
+// layers があれば、そのレイヤーのどれかが有効なときだけ働く
+export type Combo = { name: string; positions: number[]; binding: Binding; layers?: number[] };
+
+// conditional-layers: if-layers がすべて有効なとき then-layer も有効になる (トライレイヤー)
+export type ConditionalLayer = { ifLayers: number[]; thenLayer: number };
 
 export type PointingData = {
   scrollLayers: number[];
@@ -49,6 +68,7 @@ export type KeyboardData = {
   layers: Layer[];
   combos: Combo[];
   pointing?: PointingData; // overlay が無い・設定を読めないときは不明
+  conditionalLayers?: ConditionalLayer[];
 };
 
 export function stripComments(src: string): string {
@@ -161,6 +181,12 @@ export function parseBehaviors(src: string, defines: Defines = parseDefines(src)
     if (compatible === 'zmk,behavior-hold-tap') {
       const [hold, tap] = parseBindings(propertyCells(body, 'bindings', defines) ?? '');
       defs[name] = hold && tap ? { type: 'hold-tap', hold: resolve(hold.behavior), tap: resolve(tap.behavior) } : { type: 'other', label: nodeName };
+    } else if (compatible === 'zmk,behavior-sticky-key') {
+      // bindings = <&mo> ならワンショットのレイヤー、<&kp> ならワンショットの修飾キー
+      const inner = resolve(parseBindings(propertyCells(body, 'bindings', defines) ?? '')[0]?.behavior ?? '');
+      defs[name] = inner.type === 'layer' ? { type: 'sticky-layer' } : inner.type === 'key' ? { type: 'sticky-key' } : { type: 'other', label: nodeName };
+    } else if (compatible && COMPATIBLE_BEHAVIORS[compatible]) {
+      defs[name] = COMPATIBLE_BEHAVIORS[compatible];
     } else if (compatible && !compatible.startsWith('zmk,behavior-macro')) {
       // sensor-rotate など、キーとしては扱わないもの
       defs[name] = { type: 'other', label: displayName(body) ?? nodeName };
@@ -169,7 +195,9 @@ export function parseBehaviors(src: string, defines: Defines = parseDefines(src)
   return defs;
 }
 
-export function parseKeymap(src: string): { layers: Layer[]; combos: Combo[] } {
+const numbers = (cells: string | undefined): number[] => (cells ?? '').trim().split(/\s+/).filter(Boolean).map(Number);
+
+export function parseKeymap(src: string): { layers: Layer[]; combos: Combo[]; conditionalLayers: ConditionalLayer[] } {
   const clean = stripComments(src);
   const defines = parseDefines(src);
   const defs = parseBehaviors(src, defines);
@@ -184,13 +212,23 @@ export function parseKeymap(src: string): { layers: Layer[]; combos: Combo[] } {
     .filter((l): l is Layer => l !== null);
 
   const combos = clean.includes('"zmk,combos"')
-    ? childNodes(findNode(clean, 'zmk,combos')).map(({ name, body }) => ({
-        name: displayName(body) ?? name,
-        positions: (propertyCells(body, 'key-positions', defines) ?? '').trim().split(/\s+/).map(Number),
-        binding: withDefs(parseBindings(propertyCells(body, 'bindings', defines) ?? ''))[0],
+    ? childNodes(findNode(clean, 'zmk,combos')).map(({ name, body }) => {
+        const comboLayers = propertyCells(body, 'layers', defines);
+        return {
+          name: displayName(body) ?? name,
+          positions: (propertyCells(body, 'key-positions', defines) ?? '').trim().split(/\s+/).map(Number),
+          binding: withDefs(parseBindings(propertyCells(body, 'bindings', defines) ?? ''))[0],
+          ...(comboLayers === undefined ? {} : { layers: numbers(comboLayers) }),
+        };
+      })
+    : [];
+  const conditionalLayers = clean.includes('"zmk,conditional-layers"')
+    ? childNodes(findNode(clean, 'zmk,conditional-layers')).map(({ body }) => ({
+        ifLayers: numbers(propertyCells(body, 'if-layers', defines)),
+        thenLayer: numbers(propertyCells(body, 'then-layer', defines))[0],
       }))
     : [];
-  return { layers, combos };
+  return { layers, combos, conditionalLayers };
 }
 
 // &key_physical_attrs w h x y rot rx ry を順番に読む

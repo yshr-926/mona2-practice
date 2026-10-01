@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'bun:test';
 import { bundledKeyboard } from './keymap-source.ts';
-import { comboLayers, createKeymap } from './layout.ts';
+import { comboLayers, createKeymap, holdKeys, shiftKey } from './layout.ts';
 import { parseBindings, parseKeymap, type KeyboardData } from './zmk.ts';
 
 const kb = bundledKeyboard();
@@ -46,30 +46,34 @@ describe('synced moNa2 keymap', () => {
 
 describe('charMap', () => {
   it('types letters directly on the base layer', () => {
-    expect(c.get('a')).toEqual({ char: 'a', layer: 0, key: 10, layerKey: undefined });
+    expect(c.get('a')).toEqual({ char: 'a', layer: 0, layers: [0], key: 10, steps: [] });
   });
 
   it('uses the Shift on the opposite hand', () => {
-    expect(c.get('A')?.shiftKey).toBe(41); // A は左手 → 右下の Shift
-    expect(c.get('J')?.shiftKey).toBe(21); // J は右手 → Z の Shift
+    expect(shiftKey(c.get('A')!)).toBe(41); // A は左手 → 右下の Shift
+    expect(shiftKey(c.get('J')!)).toBe(21); // J は右手 → Z の Shift
   });
 
   it('prefers a direct symbol binding over Shift+number', () => {
-    expect(c.get('!')).toMatchObject({ layer: 2, key: 0, layerKey: 37 });
-    expect(c.get('!')?.shiftKey).toBeUndefined();
+    expect(c.get('!')).toMatchObject({ layer: 2, key: 0 });
+    expect(holdKeys(c.get('!')!)).toEqual([37]);
+    expect(shiftKey(c.get('!')!)).toBeUndefined();
   });
 
   it('reaches numbers through the Space layer', () => {
-    expect(c.get('1')).toMatchObject({ layer: 1, key: 0, layerKey: 40 });
+    expect(c.get('1')).toMatchObject({ layer: 1, key: 0 });
+    expect(holdKeys(c.get('1')!)).toEqual([40]);
   });
 
   it('falls back to layer + Shift when nothing else exists', () => {
-    expect(c.get('{')).toMatchObject({ layer: 1, layerKey: 40 });
-    expect(c.get('{')?.shiftKey).toBeDefined();
+    expect(c.get('{')).toMatchObject({ layer: 1 });
+    expect(holdKeys(c.get('{')!)).toEqual([40]);
+    expect(shiftKey(c.get('{')!)).toBeDefined();
   });
 
   it('types capital Z with the right Shift', () => {
-    expect(c.get('Z')).toMatchObject({ layer: 0, key: 21, shiftKey: 41 });
+    expect(c.get('Z')).toMatchObject({ layer: 0, key: 21 });
+    expect(shiftKey(c.get('Z')!)).toBe(41);
   });
 
   it('covers all printable ASCII', () => {
@@ -88,8 +92,8 @@ describe('修飾つき文字の Stroke', () => {
 
   it('&kp LS(N1) と &kp AT_SIGN は追加の Shift を必要としない', () => {
     const map = createKeymap(fixture('&kp LS(N1) &kp AT_SIGN &kp LEFT_SHIFT &kp LG(A)')).charMap;
-    expect(map.get('!')).toEqual({ char: '!', layer: 0, key: 0, layerKey: undefined });
-    expect(map.get('@')).toEqual({ char: '@', layer: 0, key: 1, layerKey: undefined });
+    expect(map.get('!')).toEqual({ char: '!', layer: 0, layers: [0], key: 0, steps: [] });
+    expect(map.get('@')).toEqual({ char: '@', layer: 0, layers: [0], key: 1, steps: [] });
     expect(map.has('1')).toBe(false);
     expect(map.has('2')).toBe(false);
     expect(map.has('a')).toBe(false);
@@ -100,10 +104,10 @@ describe('修飾つき文字の Stroke', () => {
       Digit2: ['2', '"'], IntlYen: ['¥', '|'],
     }).charMap;
     expect(map.get('"')?.key).toBe(0);
-    expect(map.get('"')?.shiftKey).toBeUndefined();
+    expect(shiftKey(map.get('"')!)).toBeUndefined();
     expect(map.get('2')?.key).toBe(1);
     expect(map.get('¥')?.key).toBe(3);
-    expect(map.get('|')?.shiftKey).toBe(2);
+    expect(shiftKey(map.get('|')!)).toBe(2);
     expect(map.has('@')).toBe(false);
   });
 });
