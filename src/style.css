@@ -191,6 +191,12 @@ header h1 a {
   color: var(--ok);
 }
 
+/* このキーマップでできない課題 */
+#toc li.unavailable a {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
 #toc li.active a {
   background: var(--note-bg);
   font-weight: 600;
@@ -349,6 +355,14 @@ header h1 a {
 
 .steps li.ok::marker {
   content: '✓ ';
+}
+
+.steps li.skip {
+  text-decoration: line-through;
+}
+
+.steps li.skip::marker {
+  content: '– ';
 }
 
 .skip-list {
