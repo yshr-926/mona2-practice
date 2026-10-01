@@ -107,6 +107,16 @@ export function buildLessons(km: Keymap): Lesson[] {
     codes,
     view: layerView(f, extra),
   });
+  const pointing = km.kb.pointing;
+  const scrollLayers = pointing?.scrollLayers ?? (k.navLayer === undefined ? [] : [k.navLayer]);
+  const scrollLayer = scrollLayers.find((layer) => km.kb.layers[layer]);
+  const scrollKey = scrollLayer === undefined ? undefined : km.layerKeys.get(scrollLayer);
+  const scrollHold = scrollKey === undefined ? (scrollLayer === undefined ? 'スクロール用レイヤーなし' : `L${scrollLayer} を有効にするキー`) : baseLabel(scrollKey);
+  const scrollInstruction = scrollLayer === undefined
+    ? (pointing ? '読み込んだ overlay にはスクロールするレイヤーがありません。ファームウェアの設定を確認してください。' : '英数 か かな を押したまま')
+    : `${scrollHold} を押したまま`;
+  const scrollFix = (axis: 'X' | 'Y', inverted: boolean | undefined) =>
+    `<code>INPUT_TRANSFORM_${axis}_INVERT</code> ${inverted === undefined ? 'の有無を確認して切り替える' : inverted ? 'を外す' : 'を追加する'}`;
   const navWarn: [number | undefined, Mark][] = [
     [k.ctrlTab?.pos, 'warn'],
     [k.ctrlShiftTab?.pos, 'warn'],
@@ -386,7 +396,7 @@ export function buildLessons(km: Keymap): Lesson[] {
           <tr><th>押しっぱなしにするキー</th><th>レイヤー</th><th>出せるもの</th></tr>
           <tr><td>${numKey} (右親指)</td><td>L${k.numLayer}</td><td>数字、[ ] ( ) \\ |</td></tr>
           <tr><td>${symKey} (左親指)</td><td>L${k.symLayer}</td><td>記号、F1〜F12、<strong>マウスクリック</strong></td></tr>
-          <tr><td>英数 または かな</td><td>L${k.navLayer}</td><td>矢印、行頭・行末への移動、Delete、スクショ、Mission Control、<strong>ボールでスクロール</strong></td></tr>
+          <tr><td>英数 または かな</td><td>L${k.navLayer}</td><td>矢印、行頭・行末への移動、Delete、スクショ、Mission Control、${scrollLayers.includes(k.navLayer ?? -1) ? '<strong>ボールでスクロール</strong>' : ''}</td></tr>
           <tr><td>英数 + かな を両方</td><td>L${k.btLayer}</td><td>Bluetooth の切り替え</td></tr>
         </table>
         <p><strong>押す順番が大事</strong>です:</p>
@@ -522,18 +532,18 @@ export function buildLessons(km: Keymap): Lesson[] {
       chapter: '5. マウス',
       title: 'ボールでスクロール',
       body: `
-        <p><b>英数 か かな を押したまま</b>ボールを転がすと、カーソルは動かずに<strong>画面がスクロール</strong>します。
+        <p><b>${scrollInstruction}</b>ボールを転がすと、カーソルは動かずに<strong>画面がスクロール</strong>します。
         縦にも横にもスクロールできます。左手のノブでも縦スクロールできるので、使いやすい方を使ってください。</p>`,
-      view: k.navLayer === undefined ? undefined : view(k.navLayer, [[k.eisu, 'hold']]),
+      view: scrollLayer === undefined ? undefined : view(scrollLayer, [[scrollKey, 'hold']]),
       tips: [
-        'カーソルが動くだけでスクロールしない → 英数/かなが押せていない。しっかり押さえたまま転がす。',
+        `カーソルが動くだけでスクロールしない → ${scrollInstruction}、ボールを転がす。${pointing === undefined ? ' overlay が無いので、矢印のレイヤーをスクロール用と仮定しています。' : ''}`,
         '上下も左右も逆に感じる → Mac の「ナチュラルなスクロール」設定で変えられる。',
         '左右だけ (または上下だけ) 逆に感じる → 下の判定結果を見てください。',
       ],
       task: scrollAxes(
-        '英数を押したまま、指示の向きにボールを転がしてください (それぞれ少しずつで OK)。',
+        `${scrollInstruction}、指示の向きにボールを転がしてください (それぞれ少しずつで OK)。`,
         `直すにはファームウェアの設定を変えます: <a href="${REPO_URL}/blob/main/boards/shields/mona2/mona2_r.overlay" target="_blank" rel="noreferrer">mona2_r.overlay</a> の
-        <code>scroller</code> にある <code>&amp;zip_scroll_transform INPUT_TRANSFORM_X_INVERT</code> の行を消して (上下だけ逆なら <code>INPUT_TRANSFORM_Y_INVERT</code> を足して) コミット →
+        <code>scroller</code> の <code>&amp;zip_scroll_transform</code> で、左右だけ逆なら ${scrollFix('X', pointing?.scrollInvertX)}、上下だけ逆なら ${scrollFix('Y', pointing?.scrollInvertY)}。変更してコミット →
         GitHub Actions のビルドが終わったら<b>右手側だけ</b>書き込み直します。`,
       ),
     },

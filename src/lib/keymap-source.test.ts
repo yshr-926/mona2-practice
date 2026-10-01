@@ -183,3 +183,34 @@ describe('GitHub', () => {
     await expect(fromGitHub('a/b', fakeFetch({ 'https://raw.githubusercontent.com/a/b/main/config/mona2.keymap': '<html>' }))).rejects.toThrow();
   });
 });
+
+
+describe('overlay の読み込みと保存', () => {
+  const overlay = '&trackball_central_listener { scroller { layers = <2>; input-processors = <&zip_xy_to_scroll_mapper>; }; };';
+  it('アップロードした overlay を保存して復元する', async () => {
+    const state = await fromFile(new File([VALID], 'mona2.keymap'), new Blob([overlay]));
+    const storage = memoryStorage();
+    storeKeymap(state, storage);
+    const restored = restoreKeymap(storage);
+    expect(restored.overlayText).toBe(overlay);
+    expect(restored.kb.pointing).toEqual({ scrollLayers: [2], scrollInvertX: false, scrollInvertY: false });
+  });
+  it('overlay 無しの旧保存データは不明のまま復元する', () => {
+    const storage = memoryStorage();
+    storeKeymap(fromText(VALID, { kind: 'file', name: 'x' }), storage);
+    expect(restoreKeymap(storage).kb.pointing).toBeUndefined();
+  });
+  it('キーマップと同じ GitHub ブランチから overlay を取得する', async () => {
+    const calls: string[] = [];
+    const fetchFn = (async (url: string) => {
+      calls.push(url);
+      if (url.endsWith('/master/config/mona2.keymap')) return new Response(VALID);
+      if (url.endsWith('/master/boards/shields/mona2/mona2_r.overlay')) return new Response(overlay);
+      return new Response('', { status: 404 });
+    }) as unknown as typeof fetch;
+    const state = await fromGitHub('a/b', fetchFn);
+    expect(state.kb.pointing?.scrollLayers).toEqual([2]);
+    expect(calls.at(-1)).toBe('https://raw.githubusercontent.com/a/b/master/boards/shields/mona2/mona2_r.overlay');
+    expect(state.overlayText).toBe(overlay);
+  });
+});

@@ -4,6 +4,7 @@
 // 物理配置は moNa2 固定なので、どの出どころでも同梱の keys を使う。
 
 import bundled from '../data/keyboard.json';
+import { parseOverlay } from './overlay.ts';
 import { parseKeymap, type KeyboardData } from './zmk.ts';
 
 export type KeymapOrigin =
@@ -14,6 +15,7 @@ export type KeymapOrigin =
 export type StoredKeymap = {
   origin: KeymapOrigin;
   text: string; // 元の .keymap テキスト (標準のときは空)
+  overlayText?: string;
   loadedAt: string;
 };
 
@@ -21,6 +23,7 @@ export type KeymapState = {
   kb: KeyboardData;
   origin: KeymapOrigin;
   text?: string;
+  overlayText?: string;
   error?: string; // 保存されていたキーマップが読めず標準に戻したときの理由
 };
 
@@ -31,13 +34,14 @@ const STORAGE_KEY = 'mona2-practice:keymap:v1';
 const BUNDLED = bundled as KeyboardData;
 
 export const KEYMAP_PATH = 'config/mona2.keymap';
+export const OVERLAY_PATH = 'boards/shields/mona2/mona2_r.overlay';
 
 export function bundledKeyboard(): KeyboardData {
   return BUNDLED;
 }
 
 /** .keymap テキストを読んで、同梱の物理配置と組み合わせる。moNa2 として使えないときは例外 */
-export function keyboardFromKeymap(text: string, origin: KeymapOrigin, loadedAt = new Date().toISOString()): KeyboardData {
+export function keyboardFromKeymap(text: string, origin: KeymapOrigin, loadedAt = new Date().toISOString(), overlayText?: string): KeyboardData {
   let parsed: ReturnType<typeof parseKeymap>;
   try {
     parsed = parseKeymap(text);
@@ -57,7 +61,7 @@ export function keyboardFromKeymap(text: string, origin: KeymapOrigin, loadedAt 
       throw new Error(`コンボ「${combo.name}」のキー位置が読み取れませんでした`);
     }
   }
-  return { source: originLabel(origin), syncedAt: loadedAt, keys, layers, combos };
+  return { source: originLabel(origin), syncedAt: loadedAt, keys, layers, combos, ...(overlayText === undefined ? {} : { pointing: parseOverlay(overlayText, text) }) };
 }
 
 export function originLabel(origin: KeymapOrigin): string {
@@ -105,8 +109,8 @@ export function restoreKeymap(storage: KeyValueStorage | undefined = defaultStor
   try {
     const stored = JSON.parse(raw) as Partial<StoredKeymap>;
     if (!isOrigin(stored?.origin) || typeof stored.text !== 'string') throw new Error('保存データの形式が違います');
-    const kb = keyboardFromKeymap(stored.text, stored.origin, stored.loadedAt);
-    return { kb, origin: stored.origin, text: stored.text };
+    const kb = keyboardFromKeymap(stored.text, stored.origin, stored.loadedAt, typeof stored.overlayText === 'string' ? stored.overlayText : undefined);
+    return { kb, origin: stored.origin, text: stored.text, overlayText: stored.overlayText };
   } catch (e) {
     clearStoredKeymap(storage);
     return bundledState(`保存されていたキーマップを読めなかったので、標準に戻しました: ${e instanceof Error ? e.message : String(e)}`);
@@ -116,7 +120,7 @@ export function restoreKeymap(storage: KeyValueStorage | undefined = defaultStor
 /** 保存できたら true。標準を選んだときは保存を消す */
 export function storeKeymap(state: KeymapState, storage: KeyValueStorage | undefined = defaultStorage()): boolean {
   if (state.origin.kind === 'bundled') return clearStoredKeymap(storage);
-  const stored: StoredKeymap = { origin: state.origin, text: state.text ?? '', loadedAt: state.kb.syncedAt };
+  const stored: StoredKeymap = { origin: state.origin, text: state.text ?? '', loadedAt: state.kb.syncedAt, overlayText: state.overlayText };
   try {
     if (!storage) return false;
     storage.setItem(STORAGE_KEY, JSON.stringify(stored));
@@ -137,21 +141,27 @@ function clearStoredKeymap(storage: KeyValueStorage | undefined): boolean {
 
 // ---- 読み込み (各出どころ → KeymapState) ----
 
-export function fromText(text: string, origin: Exclude<KeymapOrigin, { kind: 'bundled' }>): KeymapState {
-  return { kb: keyboardFromKeymap(text, origin), origin, text };
+export function fromText(text: string, origin: Exclude<KeymapOrigin, { kind: 'bundled' }>, overlayText?: string): KeymapState {
+  return { kb: keyboardFromKeymap(text, origin, undefined, overlayText), origin, text, overlayText };
 }
 
 export function fromBundled(): KeymapState {
   return bundledState();
 }
 
-export async function fromFile(file: Blob & { name: string }): Promise<KeymapState> {
-  return fromText(await file.text(), { kind: 'file', name: file.name });
+export async function fromFile(file: Blob & { name: string }, overlay?: Blob): Promise<KeymapState> {
+  return fromText(await file.text(), { kind: 'file', name: file.name }, await overlay?.text());
 }
 
 export async function fromGitHub(repoUrl: string, fetchFn: typeof fetch = fetch): Promise<KeymapState> {
   const got = await fetchGitHubFile(repoUrl, KEYMAP_PATH, fetchFn);
-  return fromText(got.text, { kind: 'github', url: got.repoUrl, owner: got.owner, repo: got.repo, branch: got.branch, path: KEYMAP_PATH });
+  let overlayText: string | undefined;
+  try {
+    overlayText = (await fetchGitHubFile(`${got.repoUrl}/tree/${got.branch}`, OVERLAY_PATH, fetchFn)).text;
+  } catch {
+    // overlay が無い・取得できない場合もキーマップ自体は利用できる。
+  }
+  return fromText(got.text, { kind: 'github', url: got.repoUrl, owner: got.owner, repo: got.repo, branch: got.branch, path: KEYMAP_PATH }, overlayText);
 }
 
 // ---- GitHub ----
