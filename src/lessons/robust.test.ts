@@ -56,7 +56,8 @@ describe('lessons with keys missing from the keymap', () => {
     it(`builds every lesson without throwing (${name})`, () => {
       const km = createKeymap(kb);
       const lessons = buildLessons(km);
-      expect(lessons.length).toBe(buildLessons(createKeymap(bundled)).length);
+      expect(lessons.length).toBeGreaterThan(0);
+      expect(lessons.length).toBeLessThanOrEqual(buildLessons(createKeymap(bundled)).length);
       for (const l of lessons) {
         for (const v of viewsOf(l)) {
           expect(kb.layers[v.layer]).toBeDefined();
@@ -70,30 +71,14 @@ describe('lessons with keys missing from the keymap', () => {
     });
   }
 
-  it('skips the lessons whose keys are missing, and says why', () => {
-    const missing = (kb: KeyboardData) =>
-      Object.fromEntries(
-        buildLessons(createKeymap(kb))
-          .filter((l) => l.missing)
-          .map((l) => [l.id, l.missing]),
-      );
-    const noNumbers = missing(VARIANTS['no number layer']);
-    expect(Object.keys(noNumbers)).toContain('numbers');
-    expect(noNumbers.numbers).toContain('このキーマップでは打てません');
-
-    const noClick = missing(VARIANTS['no left click']);
-    expect(Object.keys(noClick)).toEqual(expect.arrayContaining(['click-left', 'drag']));
-    expect(noClick['click-left']).toContain('このキーマップにはありません');
-    expect(Object.keys(noClick)).not.toContain('click-right');
-
-    // Space が消えても、Enter と BS の手順は残るので課題は飛ばさない
-    expect(Object.keys(missing(VARIANTS['base key 40 removed']))).not.toContain('thumbs');
-  });
-
-  it('shows a marker instead of the key name when a layer key is missing', () => {
-    const layers = buildLessons(createKeymap(VARIANTS['base layer only'])).find((l) => l.id === 'layers')!;
-    expect(layers.body).toContain('(キーなし)');
-    expect(layers.body).toContain('L?');
+  it('機能のないレッスンを一覧から省く', () => {
+    const ids = (kb: KeyboardData) => buildLessons(createKeymap(kb)).map(l => l.id);
+    expect(ids(VARIANTS['no number layer'])).not.toContain('numbers');
+    expect(ids(VARIANTS['no left click'])).not.toContain('click-left');
+    expect(ids(VARIANTS['no left click'])).not.toContain('drag');
+    expect(ids(VARIANTS['no left click'])).toContain('click-right');
+    expect(ids(VARIANTS['base layer only'])).not.toContain('layers');
+    expect(ids(VARIANTS['base key 40 removed'])).toContain('thumbs');
   });
 
   it('skips nothing with the synced keymap', () => {
