@@ -25,6 +25,9 @@ function keymapText(layers = kb.layers, extra = '') {
 };`;
 }
 const VALID = keymapText();
+// テスト用の .keymap には behaviors { } が無いので、解決結果 (def) を除いて比べる
+const plain = (layers: typeof kb.layers) =>
+  layers.map((l) => ({ name: l.name, bindings: l.bindings.map((b) => ({ behavior: b.behavior, params: b.params })) }));
 
 function memoryStorage(init: Record<string, string> = {}): KeyValueStorage & { data: Record<string, string> } {
   const data = { ...init };
@@ -50,7 +53,7 @@ const throwingStorage: KeyValueStorage = {
 describe('keyboardFromKeymap', () => {
   it('parses a .keymap and combines it with the bundled physical layout', () => {
     const got = keyboardFromKeymap(VALID, { kind: 'file', name: 'mona2.keymap' });
-    expect(got.layers).toEqual(kb.layers);
+    expect(plain(got.layers)).toEqual(plain(kb.layers));
     expect(got.keys).toBe(kb.keys);
     expect(got.source).toBe('mona2.keymap');
   });
@@ -94,7 +97,7 @@ describe('save and restore', () => {
     const s = restoreKeymap(storage);
     expect(s.origin).toEqual(origin);
     expect(s.text).toBe(VALID);
-    expect(s.kb.layers).toEqual(kb.layers);
+    expect(plain(s.kb.layers)).toEqual(plain(kb.layers));
     expect(s.kb.source).toBe('a/b@main');
   });
 
@@ -126,7 +129,7 @@ describe('fromFile', () => {
   it('reads an uploaded file', async () => {
     const s = await fromFile(new File([VALID], 'my.keymap'));
     expect(s.origin).toEqual({ kind: 'file', name: 'my.keymap' });
-    expect(s.kb.layers).toEqual(kb.layers);
+    expect(plain(s.kb.layers)).toEqual(plain(kb.layers));
   });
 });
 
@@ -162,7 +165,7 @@ describe('GitHub', () => {
   it('loads config/mona2.keymap and records the origin', async () => {
     const s = await fromGitHub('a/b', fakeFetch({ 'https://raw.githubusercontent.com/a/b/main/config/mona2.keymap': VALID }));
     expect(s.origin).toEqual({ kind: 'github', url: 'https://github.com/a/b', owner: 'a', repo: 'b', branch: 'main', path: 'config/mona2.keymap' });
-    expect(s.kb.layers).toEqual(kb.layers);
+    expect(plain(s.kb.layers)).toEqual(plain(kb.layers));
   });
 
   it('reports missing files, HTTP errors and network errors', async () => {
