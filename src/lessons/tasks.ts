@@ -1,8 +1,9 @@
 // レッスンの「課題」部分。どれも入力イベントを見て、条件を満たしたら ctx.complete() を呼ぶ。
 
+import type { Binding } from '../lib/zmk.ts';
 import type { Keymap } from '../lib/layout.ts';
 import { bindingLabel, expectedCodes, tapKeycode } from '../lib/layout.ts';
-import { keycodeToChar, SYSTEM_SHORTCUTS, eventMatches, keycodeToCode } from '../lib/keycodes.ts';
+import { keycodeToChar, systemShortcut, eventMatches, keycodeToCode, type Modifier } from '../lib/keycodes.ts';
 import type { KeyboardView, Mark } from '../ui/keyboard.ts';
 import { h } from '../ui/dom.ts';
 import { mountTyping } from '../ui/typing.ts';
@@ -100,7 +101,8 @@ export const press = (steps: PressStep[]): Task =>
     (ctx: TaskCtx) => {
       const list = h('ol', { className: 'steps' });
       const feedback = h('p', { className: 'feedback' });
-      ctx.area.append(list, feedback);
+      const confirmation = h('button', { className: 'primary' });
+      ctx.area.append(list, feedback, confirmation);
       let i = 0;
       const skip = () => {
         while (i < steps.length && lacks(steps[i].view)) i++;
@@ -109,6 +111,23 @@ export const press = (steps: PressStep[]): Task =>
       const render = () => {
         list.replaceChildren(...stepItems(steps, i));
         if (i < steps.length) ctx.setKeyboard(steps[i].view ?? null);
+        const labels = i < steps.length ? steps[i].codes.map((spec) => {
+          const parts = spec.split('+');
+          const code = parts.pop()!;
+          const mods: Record<string, Modifier> = { Meta: 'LG', Ctrl: 'LC', Alt: 'LA', Shift: 'LS' };
+          return systemShortcut({ code, modifiers: parts.map((m) => mods[m]).filter((m) => !!m) });
+        }) : [];
+        confirmation.hidden = i >= steps.length || (labels.length > 0 && labels.some((label) => !label));
+        confirmation.textContent = labels.find((label) => label) ?? '押した';
+      };
+
+      confirmation.onclick = () => {
+        if (i >= steps.length || confirmation.hidden) return;
+        i++;
+        skip();
+        feedback.textContent = '';
+        render();
+        if (i === steps.length) ctx.complete();
       };
 
       on(
@@ -175,12 +194,18 @@ export const confirmSteps = (steps: ConfirmStep[]): Task =>
 
 // ---- 全キーの動作確認 ----
 
+// 出力を判定できないキーも、押したことを自己申告して確認する。無効キーだけは対象外。
+export function keyTestConfirmation(binding: Binding): string | undefined {
+  if (binding.behavior === 'none' || binding.behavior === 'trans') return undefined;
+  return systemShortcut(tapKeycode(binding) ?? '') ?? (expectedCodes(binding).length ? undefined : '押した');
+}
+
 export const keyTest: Task = (ctx) => {
   const { kb, base } = ctx.km;
   const bindings = kb.layers[base].bindings;
   const codesOf = bindings.map(expectedCodes);
   // Mac が先に受け取るキーは keydown が来ないので、画面の変化を見て自己申告してもらう
-  const systemOf = bindings.map((b) => SYSTEM_SHORTCUTS[tapKeycode(b) ?? '']);
+  const systemOf = bindings.map(keyTestConfirmation);
   const state = codesOf.map((c, pos) => (c.length || systemOf[pos] ? 'pending' : 'skip')) as ('pending' | 'ok' | 'skip')[];
   const mid = (Math.min(...kb.keys.map((k) => k.x)) + Math.max(...kb.keys.map((k) => k.x))) / 2;
   const isLeft = (pos: number) => kb.keys[pos].x < mid;
@@ -229,7 +254,7 @@ export const keyTest: Task = (ctx) => {
     skipList.replaceChildren(
       ...(osKeys.length
         ? [
-            h('p', { textContent: '次のキーは Mac が先に受け取るので、ブラウザには届きません。押して画面が変わったらボタンを押してください:' }),
+            h('p', { textContent: '次のキーはブラウザで入力を確かめられません。キーを押して動作を確かめたら、ボタンを押してください:' }),
             ...osKeys.map((pos) =>
               h('button', {
                 textContent: `${name(pos)}: ${systemOf[pos]}`,
@@ -282,7 +307,7 @@ export const keyTest: Task = (ctx) => {
     'keydown',
     (e) => {
       e.preventDefault();
-      let matching = codesOf.flatMap((codes, pos) => (state[pos] !== 'skip' && codes.some((c) => eventMatches(e, c)) ? [pos] : []));
+      let matching = codesOf.flatMap((codes, pos) => (state[pos] !== 'skip' && !systemOf[pos] && codes.some((c) => eventMatches(e, c)) ? [pos] : []));
       if (!matching.length) return;
       const sameChar = matching.filter((p) => charOf(p) === e.key);
       if (sameChar.length) matching = sameChar;

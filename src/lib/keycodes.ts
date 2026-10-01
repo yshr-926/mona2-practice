@@ -58,6 +58,8 @@ const CODE_TABLE: Record<string, string> = {
   C_PLAY: 'MediaPlay', C_PAUSE: 'MediaPause', C_PLAY_PAUSE: 'MediaPlayPause', C_PP: 'MediaPlayPause',
   C_STOP: 'MediaStop', C_NEXT: 'MediaTrackNext', C_PREVIOUS: 'MediaTrackPrevious', C_PREV: 'MediaTrackPrevious',
   C_EJECT: 'Eject',
+  C_BRIGHTNESS_INC: 'BrightnessUp', C_BRI_INC: 'BrightnessUp', C_BRI_UP: 'BrightnessUp',
+  C_BRIGHTNESS_DEC: 'BrightnessDown', C_BRI_DEC: 'BrightnessDown', C_BRI_DN: 'BrightnessDown',
 };
 
 // 修飾関数は左右を保持する。文字解決では左右どちらの Shift も同じ扱い。
@@ -171,12 +173,46 @@ export function eventMatches(e: KeyboardEvent, code: string): boolean {
   return e.code === code || (KEY_ALIASES[code]?.includes(e.key) ?? false);
 }
 
-// macOS が先に受け取ってしまい、ブラウザ (アプリ) には届かないキー → 画面で確かめられる変化。
-// 全キーテストやレッスンでは、この変化を見て自己申告してもらう
+// macOS やブラウザが先に受け取る操作。戻ってきてから変化を自己申告してもらう。
 export const SYSTEM_SHORTCUTS: Record<string, string> = {
+  F11: 'デスクトップが表示された',
   F14: '画面が暗くなった',
   F15: '画面が明るくなった',
   'LC(LEFT_ARROW)': '左のデスクトップに移動した',
   'LC(RIGHT_ARROW)': '右のデスクトップに移動した',
   'LC(UP_ARROW)': 'Mission Control が開いた',
+  'LC(DOWN_ARROW)': 'アプリのウインドウ一覧が開いた',
+  'LG(SPACE)': 'Spotlight が開いた',
+  'LG(TAB)': 'アプリを切り替えた',
+  'LC(SPACE)': '入力ソースを切り替えた',
+  'LG(LS(N3))': 'スクリーンショットを撮った',
+  'LG(LS(N4))': 'スクリーンショットの範囲選択が始まった',
+  'LG(LS(N5))': 'スクリーンショットの操作パネルが開いた',
+  'LG(Q)': 'アプリを終了した (再度開いて確認)',
+  'LG(W)': 'タブやウインドウを閉じた (戻って確認)',
+  'LG(T)': '新しいタブが開いた',
+  'LG(N)': '新しいウインドウが開いた',
+  'LG(L)': 'アドレスバーが選択された',
+  'LG(R)': 'ページを再読み込みした',
+  'LG(H)': 'アプリが隠れた (戻って確認)',
+  'LG(LS(T))': '閉じたタブが開いた',
+  'LG(LS(N))': 'プライベートウインドウが開いた',
+  C_VOL_UP: '音量が上がった', C_VOL_DN: '音量が下がった', C_MUTE: '消音を切り替えた',
+  C_BRI_UP: '画面が明るくなった', C_BRI_DN: '画面が暗くなった',
+  C_PLAY_PAUSE: '再生・一時停止を切り替えた', C_PLAY: '再生した', C_PAUSE: '一時停止した',
+  C_STOP: '再生を停止した', C_NEXT: '次の曲に移った', C_PREV: '前の曲に移った', C_EJECT: '取り出しを操作した',
 };
+
+// 左右や修飾の順序、キーコードの別名を同じ署名へ正規化する。
+function shortcutSignature(key: PhysicalKey): string {
+  const mods = [...new Set(key.modifiers.map((m) => m.slice(1)))].sort();
+  return [...mods, key.code].join('+');
+}
+const normalizedShortcuts = new Map(
+  Object.entries(SYSTEM_SHORTCUTS).map(([key, label]) => [shortcutSignature(resolveKeycode(key)!), label]),
+);
+
+export function systemShortcut(keycode: string | PhysicalKey): string | undefined {
+  const key = typeof keycode === 'string' ? resolveKeycode(keycode) : keycode;
+  return key ? normalizedShortcuts.get(shortcutSignature(key)) : undefined;
+}
