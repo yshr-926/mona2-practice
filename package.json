@@ -1,0 +1,18 @@
+{
+  "name": "mona2-practice",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bunx --bun vite",
+    "build": "tsc && bunx --bun vite build",
+    "preview": "bunx --bun vite preview",
+    "test": "bun test",
+    "typecheck": "tsc",
+    "sync-keymap": "bun scripts/sync-keymap.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.2",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0"
+  }
+}

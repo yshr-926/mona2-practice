@@ -1,0 +1,1754 @@
+{
+  "source": "~/zmk-config-moNa2-v2",
+  "syncedAt": "2026-09-24T05:56:18.876Z",
+  "keys": [
+    {
+      "w": 1,
+      "h": 1,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 1,
+      "y": 0
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 2,
+      "y": 0
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 3,
+      "y": 0
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 4,
+      "y": 0
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 8,
+      "y": 0
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 9,
+      "y": 0
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 10,
+      "y": 0
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 11,
+      "y": 0
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 12,
+      "y": 0
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 0,
+      "y": 1
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 1,
+      "y": 1
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 2,
+      "y": 1
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 3,
+      "y": 1
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 4,
+      "y": 1
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 7,
+      "y": 1
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 8,
+      "y": 1
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 9,
+      "y": 1
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 10,
+      "y": 1
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 11,
+      "y": 1
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 12,
+      "y": 1
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 0,
+      "y": 2
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 1,
+      "y": 2
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 2,
+      "y": 2
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 3,
+      "y": 2
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 4,
+      "y": 2
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 5,
+      "y": 2
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 7,
+      "y": 2
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 8,
+      "y": 2
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 9,
+      "y": 2
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 10,
+      "y": 2
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 11,
+      "y": 2
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 12,
+      "y": 2
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 0,
+      "y": 3
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 1,
+      "y": 3
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 2,
+      "y": 3
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 3,
+      "y": 3
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 4,
+      "y": 3
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 5,
+      "y": 3
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 7,
+      "y": 3
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 8,
+      "y": 3
+    },
+    {
+      "w": 1,
+      "h": 1,
+      "x": 12,
+      "y": 3
+    }
+  ],
+  "layers": [
+    {
+      "name": "default_layer",
+      "bindings": [
+        {
+          "behavior": "kp",
+          "params": [
+            "Q"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "W"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "E"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "R"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "T"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "Y"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "U"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "I"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "O"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "P"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "A"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "S"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "D"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "F"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "G"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "TAB"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "H"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "J"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "K"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "L"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "SEMICOLON"
+          ]
+        },
+        {
+          "behavior": "mt",
+          "params": [
+            "LEFT_SHIFT",
+            "Z"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "X"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "C"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "V"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "B"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "LC(LEFT_ARROW)"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "LC(RIGHT_ARROW)"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "N"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "M"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "COMMA"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "DOT"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "SLASH"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "LCTRL"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "LEFT_ALT"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "LEFT_WIN"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "BACKSPACE"
+          ]
+        },
+        {
+          "behavior": "lt",
+          "params": [
+            "2",
+            "ENTER"
+          ]
+        },
+        {
+          "behavior": "lt_to_layer_0",
+          "params": [
+            "3",
+            "LANG2"
+          ]
+        },
+        {
+          "behavior": "lt_to_layer_0",
+          "params": [
+            "3",
+            "LANG1"
+          ]
+        },
+        {
+          "behavior": "lt",
+          "params": [
+            "1",
+            "SPACE"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "RIGHT_SHIFT"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "layer_1",
+      "bindings": [
+        {
+          "behavior": "kp",
+          "params": [
+            "NUMBER_1"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "NUMBER_2"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "NUMBER_3"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "NUMBER_4"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "NUMBER_5"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "NUMBER_6"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "NUMBER_7"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "NUMBER_8"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "NUMBER_9"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "NUMBER_0"
+          ]
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "LEFT_BRACKET"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "RIGHT_BRACKET"
+          ]
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "LEFT_PARENTHESIS"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "RIGHT_PARENTHESIS"
+          ]
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "BACKSLASH"
+          ]
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "PIPE"
+          ]
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        }
+      ]
+    },
+    {
+      "name": "layer_2",
+      "bindings": [
+        {
+          "behavior": "kp",
+          "params": [
+            "EXCLAMATION"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "AT_SIGN"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "POUND"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "DOLLAR"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "PERCENT"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "CARET"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "AMPERSAND"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "ASTERISK"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "MINUS"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "UNDERSCORE"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "GRAVE"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "TILDE"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "DOUBLE_QUOTES"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "SQT"
+          ]
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "mkp",
+          "params": [
+            "MB3"
+          ]
+        },
+        {
+          "behavior": "mkp",
+          "params": [
+            "MB1"
+          ]
+        },
+        {
+          "behavior": "mkp",
+          "params": [
+            "MB2"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "EQUAL"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "PLUS"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "F1"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "F2"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "F3"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "F4"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "F5"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "F11"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "F12"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "F6"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "F7"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "F8"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "F9"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "F10"
+          ]
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        }
+      ]
+    },
+    {
+      "name": "layer_3",
+      "bindings": [
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "LC(LS(TAB))"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "LG(LS(N4))"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "LC(TAB)"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "LC(UP_ARROW)"
+          ]
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "HOME"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "UP_ARROW"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "END"
+          ]
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "LG(LEFT_ARROW)"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "LG(RIGHT_ARROW)"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "LC(LEFT_ARROW)"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "LC(RIGHT_ARROW)"
+          ]
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "LEFT_ARROW"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "DOWN_ARROW"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "RIGHT_ARROW"
+          ]
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "LEFT_SHIFT"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "LG(LS(LEFT_ARROW))"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "LG(LS(RIGHT_ARROW))"
+          ]
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "DELETE"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "PAGE_UP"
+          ]
+        },
+        {
+          "behavior": "kp",
+          "params": [
+            "PAGE_DOWN"
+          ]
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        }
+      ]
+    },
+    {
+      "name": "layer_4",
+      "bindings": [
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "bt",
+          "params": [
+            "BT_SEL",
+            "0"
+          ]
+        },
+        {
+          "behavior": "bt",
+          "params": [
+            "BT_SEL",
+            "1"
+          ]
+        },
+        {
+          "behavior": "bt",
+          "params": [
+            "BT_SEL",
+            "2"
+          ]
+        },
+        {
+          "behavior": "bt",
+          "params": [
+            "BT_SEL",
+            "3"
+          ]
+        },
+        {
+          "behavior": "bt",
+          "params": [
+            "BT_SEL",
+            "4"
+          ]
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "bootloader",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "bt",
+          "params": [
+            "BT_CLR"
+          ]
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "bt",
+          "params": [
+            "BT_CLR_ALL"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "MOUSE",
+      "bindings": [
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "mkp",
+          "params": [
+            "MB3"
+          ]
+        },
+        {
+          "behavior": "mkp",
+          "params": [
+            "MB2"
+          ]
+        },
+        {
+          "behavior": "mkp",
+          "params": [
+            "MB1"
+          ]
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "mkp",
+          "params": [
+            "MB1"
+          ]
+        },
+        {
+          "behavior": "mkp",
+          "params": [
+            "MB2"
+          ]
+        },
+        {
+          "behavior": "mkp",
+          "params": [
+            "MB3"
+          ]
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        }
+      ]
+    },
+    {
+      "name": "SCROLL",
+      "bindings": [
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        },
+        {
+          "behavior": "trans",
+          "params": []
+        }
+      ]
+    }
+  ],
+  "combos": [
+    {
+      "name": "layer4_ESC",
+      "positions": [
+        39,
+        38
+      ],
+      "binding": {
+        "behavior": "lt",
+        "params": [
+          "4",
+          "ESC"
+        ]
+      }
+    },
+    {
+      "name": "tab",
+      "positions": [
+        11,
+        12
+      ],
+      "binding": {
+        "behavior": "kp",
+        "params": [
+          "TAB"
+        ]
+      }
+    }
+  ]
+}

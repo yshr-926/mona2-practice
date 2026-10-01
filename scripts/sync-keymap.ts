@@ -1,0 +1,33 @@
+// zmk-config-moNa2-v2 のキーマップと物理レイアウトを src/data/keyboard.json に書き出す。
+// 使い方: bun run sync-keymap [<zmk-config のパス>]
+//   パス省略時は ZMK_CONFIG_DIR、それも無ければ ~/zmk-config-moNa2-v2
+
+import { readFileSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join, resolve } from 'node:path';
+import { parseKeymap, parsePhysicalLayout, type KeyboardData } from '../src/lib/zmk.ts';
+
+const configDir = resolve(process.argv[2] ?? process.env.ZMK_CONFIG_DIR ?? join(homedir(), 'zmk-config-moNa2-v2'));
+const keymapPath = join(configDir, 'config/mona2.keymap');
+const dtsiPath = join(configDir, 'boards/shields/mona2/mona2.dtsi');
+
+const { layers, combos } = parseKeymap(readFileSync(keymapPath, 'utf8'));
+const keys = parsePhysicalLayout(readFileSync(dtsiPath, 'utf8'));
+
+for (const layer of layers) {
+  if (layer.bindings.length !== keys.length) {
+    throw new Error(`layer "${layer.name}" has ${layer.bindings.length} bindings, expected ${keys.length}`);
+  }
+}
+
+const data: KeyboardData = {
+  source: configDir.replace(homedir(), '~'),
+  syncedAt: new Date().toISOString(),
+  keys,
+  layers,
+  combos,
+};
+
+const out = new URL('../src/data/keyboard.json', import.meta.url);
+writeFileSync(out, JSON.stringify(data, null, 2) + '\n');
+console.log(`synced ${layers.length} layers, ${keys.length} keys, ${combos.length} combos from ${configDir}`);
