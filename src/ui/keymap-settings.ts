@@ -67,10 +67,12 @@ export function mountKeymapSettings(area: HTMLElement, { current, apply, applyLa
   });
 
   // ファイル
-  const file = h('input', { type: 'file', accept: '.keymap,.dtsi,.txt' });
+  const file = h('input', { type: 'file', accept: '.keymap,.dtsi,.txt,.overlay', multiple: true });
   file.addEventListener('change', () => {
-    const f = file.files?.[0];
-    if (f) run(() => fromFile(f)).finally(() => (file.value = ''));
+    const files = Array.from(file.files ?? []);
+    const overlay = files.find((f) => f.name.endsWith('.overlay'));
+    const f = files.find((f) => !f.name.endsWith('.overlay'));
+    if (f) run(() => fromFile(f, overlay)).finally(() => (file.value = ''));
   });
 
   // 標準
@@ -111,7 +113,7 @@ export function mountKeymapSettings(area: HTMLElement, { current, apply, applyLa
       'section',
       { className: 'keymap-option' },
       h('h3', { textContent: 'ファイルから' }),
-      h('p', { textContent: '手元の mona2.keymap を選んでください。' }),
+      h('p', { textContent: '手元の mona2.keymap を選んでください。mona2_r.overlay も一緒に選ぶとスクロール設定を読み込めます。' }),
       file,
     ),
     h('section', { className: 'keymap-option' }, h('h3', { textContent: '標準に戻す' }), h('p', { textContent: 'このアプリに同梱している作者のキーマップを使います。' }), resetButton),

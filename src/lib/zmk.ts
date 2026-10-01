@@ -35,12 +35,20 @@ export type KeyGeometry = { x: number; y: number; w: number; h: number };
 
 export type Combo = { name: string; positions: number[]; binding: Binding };
 
+export type PointingData = {
+  scrollLayers: number[];
+  autoMouseLayer?: number;
+  scrollInvertX?: boolean;
+  scrollInvertY?: boolean;
+};
+
 export type KeyboardData = {
   source: string;
   syncedAt: string;
   keys: KeyGeometry[];
   layers: Layer[];
   combos: Combo[];
+  pointing?: PointingData; // overlay が無い・設定を読めないときは不明
 };
 
 export function stripComments(src: string): string {

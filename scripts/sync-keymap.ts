@@ -3,16 +3,20 @@
 // 使い方: bun run sync-keymap [<zmk-config のパス>]
 //   パス省略時は ZMK_CONFIG_DIR、それも無ければ ~/zmk-config-moNa2-v2
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { parseOverlay } from '../src/lib/overlay.ts';
 import { parseKeymap, parsePhysicalLayout, type KeyboardData } from '../src/lib/zmk.ts';
 
 const configDir = resolve(process.argv[2] ?? process.env.ZMK_CONFIG_DIR ?? join(homedir(), 'zmk-config-moNa2-v2'));
 const keymapPath = join(configDir, 'config/mona2.keymap');
 const dtsiPath = join(configDir, 'boards/shields/mona2/mona2.dtsi');
 
-const { layers, combos } = parseKeymap(readFileSync(keymapPath, 'utf8'));
+const keymapText = readFileSync(keymapPath, 'utf8');
+const { layers, combos } = parseKeymap(keymapText);
+const overlayPath = join(configDir, 'boards/shields/mona2/mona2_r.overlay');
+const pointing = existsSync(overlayPath) ? parseOverlay(readFileSync(overlayPath, 'utf8'), keymapText) : undefined;
 const keys = parsePhysicalLayout(readFileSync(dtsiPath, 'utf8'));
 
 for (const layer of layers) {
@@ -27,6 +31,7 @@ const data: KeyboardData = {
   keys,
   layers,
   combos,
+  pointing,
 };
 
 const out = new URL('../src/data/keyboard.json', import.meta.url);
