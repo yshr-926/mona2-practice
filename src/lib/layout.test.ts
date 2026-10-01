@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'bun:test';
-import data from '../data/keyboard.json';
+import { bundledKeyboard } from './keymap-source.ts';
 import { comboLayers, createKeymap } from './layout.ts';
-import { parseBindings, parseKeymap, type KeyboardData } from './zmk.ts';
+import { parseBindings, parseKeymap } from './zmk.ts';
 
-const kb = data as KeyboardData;
+const kb = bundledKeyboard();
 const km = createKeymap(kb);
 const c = km.charMap;
 

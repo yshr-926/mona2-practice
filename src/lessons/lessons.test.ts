@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'bun:test';
-import data from '../data/keyboard.json';
-import type { KeyboardData } from '../lib/zmk.ts';
+import { bundledKeyboard } from '../lib/keymap-source.ts';
 import { createKeymap, expectedCodes, tapKeycode } from '../lib/layout.ts';
 import { SYSTEM_SHORTCUTS, keycodeToCode } from '../lib/keycodes.ts';
 import { buildLessons, keyPositions } from './index.ts';
 
-const kb = data as KeyboardData;
+const kb = bundledKeyboard();
 const km = createKeymap(kb);
 
 describe('lessons against the synced keymap', () => {

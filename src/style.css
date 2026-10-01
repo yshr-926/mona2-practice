@@ -679,3 +679,41 @@ header h1 a {
   color: var(--muted);
   font-weight: normal;
 }
+
+/* ---- キーマップの設定 ---- */
+
+.keymap-status {
+  margin: 12px 0;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.keymap-message.ok {
+  color: var(--ok);
+}
+
+.keymap-message.error {
+  color: var(--warn);
+}
+
+.keymap-option {
+  margin: 20px 0;
+}
+
+.keymap-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.keymap-url {
+  flex: 1;
+  min-width: 240px;
+  padding: 6px 10px;
+  font: inherit;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+}
