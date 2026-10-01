@@ -1,62 +1,67 @@
-import type { Binding, KeyboardData } from './zmk.ts';
+import { behaviorDef, type BehaviorDef, type Binding, type KeyboardData } from './zmk.ts';
 import { KEYCODE_CHAR, SHIFTED, keycodeLabel, keycodeToCode } from './keycodes.ts';
 
-// タップ時に送られるキーコード (&kp X / &mt MOD X / &lt N X など)
+// タップ時に送られるキーコード (&kp X / &mt MOD X / &lt N X / 自作 hold-tap など)
 export function tapKeycode(b: Binding): string | undefined {
-  switch (b.behavior) {
-    case 'kp':
-      return b.params[0];
-    case 'mt':
-    case 'lt':
-    case 'lt_to_layer_0':
-      return b.params[1];
-    default:
-      return undefined;
-  }
+  const def = behaviorDef(b);
+  if (def?.type === 'key') return b.params[0];
+  if (def?.type === 'hold-tap' && def.tap.type === 'key') return b.params[1];
+  return undefined;
 }
 
 // ホールドで有効になるレイヤー番号
 export function holdLayer(b: Binding): number | undefined {
-  if (b.behavior === 'mo') return Number(b.params[0]);
-  if (b.behavior === 'lt' || b.behavior === 'lt_to_layer_0') return Number(b.params[0]);
+  const def = behaviorDef(b);
+  if (def?.type === 'layer' || (def?.type === 'hold-tap' && def.hold.type === 'layer')) return Number(b.params[0]);
   return undefined;
 }
 
-const MACRO_LABELS: Record<string, string> = {
-  BT0: 'BT 0',
-  BT1: 'BT 1',
-  screenshot: 'スクショ',
-  henkan: '変換',
+// ホールドで送られるキーコード (&mt MOD X やホームロウ mod の MOD)
+function holdKeycode(b: Binding): string | undefined {
+  const def = behaviorDef(b);
+  return def?.type === 'hold-tap' && def.hold.type === 'key' ? b.params[0] : undefined;
+}
+
+// ZMK 組み込みで、パラメータを取らないビヘイビアの表示名
+const BUILTIN_LABELS: Record<string, string> = {
   studio_unlock: 'Unlock',
   bootloader: 'Boot',
+  sys_reset: 'Reset',
   key_repeat: 'Repeat',
+  caps_word: 'Caps',
 };
 
+// 正体ごとの表示 (hold-tap はホールド側・タップ側それぞれに使う)
+function defLabel(def: BehaviorDef, param: string | undefined): string {
+  switch (def.type) {
+    case 'key':
+      return keycodeLabel(param ?? '');
+    case 'layer':
+      return `L${param}`;
+    case 'hold-tap':
+      return defLabel(def.tap, param);
+    case 'other':
+      return def.label;
+  }
+}
+
 export function bindingLabel(b: Binding): { tap: string; hold?: string } {
-  const tap = tapKeycode(b);
   switch (b.behavior) {
     case 'trans':
       return { tap: '' };
     case 'none':
       return { tap: '✕' };
-    case 'mt':
-      return { tap: keycodeLabel(tap!), hold: keycodeLabel(b.params[0]) };
-    case 'lt':
-    case 'lt_to_layer_0':
-      return { tap: keycodeLabel(tap!), hold: `L${b.params[0]}` };
-    case 'mo':
-      return { tap: `L${b.params[0]}` };
-    case 'kp':
-      return { tap: keycodeLabel(tap!) };
     case 'mkp':
       return { tap: { MB1: '左クリ', MB2: '右クリ', MB3: '中クリ' }[b.params[0]] ?? b.params[0] };
     case 'bt':
       return { tap: b.params[0] === 'BT_SEL' ? `BT ${b.params[1]}` : b.params[0] === 'BT_CLR' ? 'BT消去' : b.params[0] === 'BT_CLR_ALL' ? '全消去' : b.params.join(' ') };
     case 'out':
       return { tap: 'USB⇄BT' };
-    default:
-      return { tap: MACRO_LABELS[b.behavior] ?? b.behavior };
   }
+  const def = behaviorDef(b);
+  if (def?.type === 'hold-tap') return { tap: defLabel(def.tap, b.params[1]), hold: defLabel(def.hold, b.params[0]) };
+  if (def) return { tap: defLabel(def, b.params[0]) };
+  return { tap: BUILTIN_LABELS[b.behavior] ?? b.behavior };
 }
 
 // ---- キーマップ ----
@@ -106,8 +111,8 @@ export type Stroke = {
 
 function isShift(b: Binding): boolean {
   return (
-    (b.behavior === 'mt' && /SHIFT|SHFT/.test(b.params[0])) ||
-    (b.behavior === 'kp' && /^(LEFT_SHIFT|LSHFT|RIGHT_SHIFT|RSHFT)$/.test(b.params[0]))
+    /SHIFT|SHFT/.test(holdKeycode(b) ?? '') ||
+    (behaviorDef(b)?.type === 'key' && /^(LEFT_SHIFT|LSHFT|RIGHT_SHIFT|RSHFT)$/.test(b.params[0]))
   );
 }
 
@@ -140,7 +145,7 @@ function buildCharMap(km: Keymap): Map<string, Stroke> {
     (s.layerKey !== undefined ? 1 : 0) +
     (s.shiftKey !== undefined ? 1 : 0) +
     (s.layer === base ? 0 : 0.01 + s.layer * 0.001) +
-    (km.effective(s.layer, s.key).behavior === 'kp' ? 0 : 0.0001);
+    (behaviorDef(km.effective(s.layer, s.key))?.type === 'key' ? 0 : 0.0001);
   const map = new Map<string, Stroke>();
   for (const s of candidates.sort((a, b) => cost(a) - cost(b))) {
     if (!map.has(s.char)) map.set(s.char, s);
@@ -150,8 +155,7 @@ function buildCharMap(km: Keymap): Map<string, Stroke> {
 
 // キーテスト用: そのキーを単独で押したときにブラウザへ届く KeyboardEvent.code の候補
 export function expectedCodes(b: Binding): string[] {
-  const codes = [tapKeycode(b)];
-  if (b.behavior === 'mt') codes.push(b.params[0]); // ホールド側 (Shift など) でも可
+  const codes = [tapKeycode(b), holdKeycode(b)]; // ホールド側 (Shift など) でも可
   return codes.map((c) => c && keycodeToCode(c)).filter((c): c is string => !!c);
 }
 
@@ -172,7 +176,7 @@ export function findKey(km: Keymap, match: (b: Binding) => boolean): Found | und
 export const isKey =
   (keycode: string) =>
   (b: Binding): boolean =>
-    b.behavior === 'kp' && b.params[0] === keycode;
+    behaviorDef(b)?.type === 'key' && b.params[0] === keycode;
 
 export const isBehavior =
   (behavior: string, ...params: string[]) =>
