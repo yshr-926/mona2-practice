@@ -122,6 +122,20 @@ export const US_LAYOUT: KeyboardLayout = {
   NumpadDivide: ['/', '/'], NumpadDecimal: ['.', '.'], NumpadEqual: ['=', '='], NumpadComma: [',', ','],
 };
 
+// Mac の JIS 英数入力。JIS にない US 専用キーは文字候補に含めない。
+const { Backquote: _backquote, IntlBackslash: _intlBackslash, ...JIS_COMMON } = US_LAYOUT;
+export const JIS_LAYOUT: KeyboardLayout = {
+  ...JIS_COMMON,
+  ...Object.fromEntries('1234567890'.split('').map((c, i) => [`Digit${c}`, [c, '!"#$%&\'()0'[i]]])),
+  Minus: ['-', '='], Equal: ['^', '~'],
+  BracketLeft: ['@', '`'], BracketRight: ['[', '{'], Backslash: [']', '}'],
+  Semicolon: [';', '+'], Quote: [':', '*'],
+  // Apple の日本語入力設定では「¥ キーで入力する文字」を変更できる。
+  // この表はキー刻印に合わせて ¥ を既定とする (\ は IntlRo から入力)。
+  // https://support.apple.com/guide/japanese-input-method/jpim662a12b9/mac
+  IntlYen: ['¥', '|'], IntlRo: ['\\', '_'],
+};
+
 export function physicalKeyToChar(code: string, shift = false, layout: KeyboardLayout = US_LAYOUT): string | undefined {
   return Object.hasOwn(layout, code) ? layout[code]?.[shift ? 1 : 0] : undefined;
 }

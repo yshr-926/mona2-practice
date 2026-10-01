@@ -1,16 +1,18 @@
 // キーマップの読み込み画面。標準・.keymap ファイル・GitHub リポジトリから選ぶ。
 
 import { KEYMAP_PATH, currentKeymap, fromBundled, fromFile, fromGitHub, originLabel, type KeymapState } from '../lib/keymap-source.ts';
+import { currentLayoutPreference, detectedLayout, setLayoutPreference, type LayoutPreference } from '../lib/os-layout.ts';
 import { h } from './dom.ts';
 
 type Options = {
   current: KeymapState;
   /** キーマップを切り替える。保存できなかったら false、使えないキーマップなら例外 */
   apply: (state: KeymapState) => boolean;
+  applyLayout: () => void;
   signal: AbortSignal;
 };
 
-export function mountKeymapSettings(area: HTMLElement, { current, apply, signal }: Options) {
+export function mountKeymapSettings(area: HTMLElement, { current, apply, applyLayout, signal }: Options) {
   const status = h('div', { className: 'keymap-status' });
   const message = h('p', { className: 'keymap-message', hidden: true });
 
@@ -77,7 +79,24 @@ export function mountKeymapSettings(area: HTMLElement, { current, apply, signal 
     onclick: () => run(fromBundled, resetButton),
   });
 
+  const layoutSelect = h('select', { id: 'os-layout' },
+    ...([['auto', '自動'], ['us', 'US'], ['jis', 'JIS']] as const).map(([value, textContent]) => h('option', { value, textContent })),
+  );
+  layoutSelect.value = currentLayoutPreference();
+  layoutSelect.addEventListener('change', () => {
+    const saved = setLayoutPreference(layoutSelect.value as LayoutPreference);
+    applyLayout();
+    say(saved ? '配列を変更しました。レッスンと自由練習の課題・ヒントに反映されます。' : '配列を変更しましたが、ブラウザに保存できませんでした。', saved ? 'ok' : 'error');
+  }, { signal });
+  const detected = detectedLayout();
+
   area.replaceChildren(
+    h('section', { className: 'keymap-option' },
+      h('h3', { textContent: 'Mac のキーボード配列' }),
+      h('p', { textContent: detected ? `自動判定: ${detected.toUpperCase()}。手動選択が優先されます。` : '自動判定できないため、自動では US を使います。Mac の入力設定に合わせて US / JIS を選んでください。' }),
+      h('label', { htmlFor: 'os-layout', textContent: '配列: ' }), layoutSelect,
+      h('p', { textContent: 'JIS の ¥ キーは ¥ として扱います。Mac の「¥ キーで入力する文字」設定も合わせてください。' }),
+    ),
     h('p', { textContent: '自分の moNa2 のキーマップで練習したいときは、ここで読み込みます。読み込んだキーマップはこのブラウザに保存され、次に開いたときも使われます。' }),
     status,
     message,
