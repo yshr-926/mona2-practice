@@ -8,6 +8,7 @@ import { mountPractice } from './practice.ts';
 import { renderKeyboard, type KeyboardView } from './ui/keyboard.ts';
 import { h } from './ui/dom.ts';
 import { startMonitor } from './ui/monitor.ts';
+import { currentLayout, initializeLayout } from './lib/os-layout.ts';
 import { mountKeymapSettings } from './ui/keymap-settings.ts';
 
 // キーマップから作るもの。キーマップを切り替えたら作り直す
@@ -19,7 +20,7 @@ const done = loadProgress();
 
 function build(state: KeymapState) {
   const data = state.kb;
-  const nextKm = createKeymap(data);
+  const nextKm = createKeymap(data, 0, currentLayout());
   const nextLessons = buildLessons(nextKm); // 読めないキーマップならここで例外 (切り替え前の状態は残る)
   kb = data;
   km = nextKm;
@@ -205,7 +206,13 @@ function showKeymapSettings() {
   const content = $('content');
   const area = h('div');
   content.replaceChildren(h('p', { className: 'chapter', textContent: 'いつでも' }), h('h2', { textContent: 'キーマップの設定' }), area);
-  mountKeymapSettings(area, { current: currentKeymap(), apply: switchKeymap, signal });
+  mountKeymapSettings(area, {
+    current: currentKeymap(), apply: switchKeymap, signal,
+    applyLayout: () => {
+      build(currentKeymap());
+      renderToc('keymap');
+    },
+  });
   renderToc('keymap');
 }
 
@@ -239,7 +246,7 @@ const BLOCKED = new Set(['Space', 'Tab', 'Enter', 'Backspace', 'ArrowUp', 'Arrow
 window.addEventListener(
   'keydown',
   (e) => {
-    if (e.isComposing || (e.target as HTMLElement).closest?.('input, textarea')) return;
+    if (e.isComposing || (e.target as HTMLElement).closest?.('input, textarea, select')) return;
     if (BLOCKED.has(e.code) || (e.metaKey && e.key.length === 1 && e.key !== 'r')) e.preventDefault(); // Cmd+R (再読み込み) だけは残す
   },
   true,
@@ -250,11 +257,15 @@ document.addEventListener('click', (e) => {
 });
 
 startMonitor($('monitor'));
-try {
-  build(currentKeymap());
-} catch {
-  // 保存されていたキーマップではレッスンを作れなかったので標準に戻す
-  switchKeymap(fromBundled());
+async function start() {
+  await initializeLayout();
+  try {
+    build(currentKeymap());
+  } catch {
+    // 保存されていたキーマップではレッスンを作れなかったので標準に戻す
+    switchKeymap(fromBundled());
+  }
+  window.addEventListener('hashchange', route);
+  route();
 }
-window.addEventListener('hashchange', route);
-route();
+void start();
