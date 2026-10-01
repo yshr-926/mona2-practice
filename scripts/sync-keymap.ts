@@ -1,4 +1,5 @@
 // zmk-config-moNa2-v2 のキーマップと物理レイアウトを src/data/keyboard.json に書き出す。
+// これがアプリ同梱の「標準のキーマップ」になる (利用者が読み込むキーマップは src/lib/keymap-source.ts が実行時に扱う)。
 // 使い方: bun run sync-keymap [<zmk-config のパス>]
 //   パス省略時は ZMK_CONFIG_DIR、それも無ければ ~/zmk-config-moNa2-v2
 

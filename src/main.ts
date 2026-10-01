@@ -1,21 +1,40 @@
 import './style.css';
-import data from './data/keyboard.json';
 import type { KeyboardData } from './lib/zmk.ts';
-import { comboLayers, createKeymap } from './lib/layout.ts';
+import { currentKeymap, fromBundled, setCurrentKeymap, type KeymapState } from './lib/keymap-source.ts';
+import { comboLayers, createKeymap, type Keymap } from './lib/layout.ts';
 import { loadProgress, saveProgress } from './lib/progress.ts';
 import { buildLessons, type Lesson } from './lessons/index.ts';
 import { mountPractice } from './practice.ts';
 import { renderKeyboard, type KeyboardView } from './ui/keyboard.ts';
 import { h } from './ui/dom.ts';
 import { startMonitor } from './ui/monitor.ts';
+import { mountKeymapSettings } from './ui/keymap-settings.ts';
 
-const kb = data as KeyboardData;
-const km = createKeymap(kb);
-const lessons = buildLessons(km);
+// キーマップから作るもの。キーマップを切り替えたら作り直す
+let kb: KeyboardData;
+let km: Keymap;
+let lessons: Lesson[];
+let reachable: number[];
 const done = loadProgress();
 
-// レイヤーのタブに出すのは、実際に行けるレイヤーだけ
-const reachable = [...new Set([km.base, ...km.layerKeys.keys(), ...comboLayers(kb)])].sort((a, b) => a - b);
+function build(state: KeymapState) {
+  const data = state.kb;
+  const nextKm = createKeymap(data);
+  const nextLessons = buildLessons(nextKm); // 読めないキーマップならここで例外 (切り替え前の状態は残る)
+  kb = data;
+  km = nextKm;
+  lessons = nextLessons;
+  // レイヤーのタブに出すのは、実際に行けるレイヤーだけ
+  reachable = [...new Set([km.base, ...km.layerKeys.keys(), ...comboLayers(kb)])].sort((a, b) => a - b);
+  const when = new Date(kb.syncedAt).toLocaleString();
+  $('source').textContent = `keymap: ${kb.source} (${state.origin.kind === 'bundled' ? `標準, synced ${when}` : `読み込み ${when}`})`;
+}
+
+/** キーマップを切り替えて画面を作り直す。保存できなかったときは false */
+function switchKeymap(state: KeymapState): boolean {
+  build(state);
+  return setCurrentKeymap(state);
+}
 
 const $ = (id: string) => document.getElementById(id)!;
 let current: AbortController | undefined;
@@ -48,7 +67,12 @@ function renderToc(activeId?: string) {
       ),
     ),
     h('h3', { textContent: 'いつでも' }),
-    h('ol', {}, h('li', { className: activeId === 'practice' ? 'active' : '' }, h('a', { href: '#/practice', textContent: '自由練習' }))),
+    h(
+      'ol',
+      {},
+      h('li', { className: activeId === 'practice' ? 'active' : '' }, h('a', { href: '#/practice', textContent: '自由練習' })),
+      h('li', { className: activeId === 'keymap' ? 'active' : '' }, h('a', { href: '#/keymap', textContent: 'キーマップの設定' })),
+    ),
     h('button', {
       className: 'reset',
       textContent: '進み具合をリセット',
@@ -176,6 +200,15 @@ function showPractice() {
   renderToc('practice');
 }
 
+function showKeymapSettings() {
+  const signal = begin();
+  const content = $('content');
+  const area = h('div');
+  content.replaceChildren(h('p', { className: 'chapter', textContent: 'いつでも' }), h('h2', { textContent: 'キーマップの設定' }), area);
+  mountKeymapSettings(area, { current: currentKeymap(), apply: switchKeymap, signal });
+  renderToc('keymap');
+}
+
 function begin(): AbortSignal {
   current?.abort();
   current = new AbortController();
@@ -192,8 +225,9 @@ function listOf(items: string[]) {
 // ---- ルーティング ----
 
 function route() {
-  const m = location.hash.match(/^#\/(lesson|practice)\/?([\w-]*)/);
+  const m = location.hash.match(/^#\/(lesson|practice|keymap)\/?([\w-]*)/);
   if (m?.[1] === 'practice') return showPractice();
+  if (m?.[1] === 'keymap') return showKeymapSettings();
   const lesson = lessons.find((l) => l.id === m?.[2]) ?? lessons.find((l) => !done.has(l.id)) ?? lessons[0];
   showLesson(lesson);
 }
@@ -216,6 +250,11 @@ document.addEventListener('click', (e) => {
 });
 
 startMonitor($('monitor'));
-$('source').textContent = `keymap: ${kb.source} (synced ${new Date(kb.syncedAt).toLocaleString()})`;
+try {
+  build(currentKeymap());
+} catch {
+  // 保存されていたキーマップではレッスンを作れなかったので標準に戻す
+  switchKeymap(fromBundled());
+}
 window.addEventListener('hashchange', route);
 route();
